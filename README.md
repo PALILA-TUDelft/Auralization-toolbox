@@ -19,13 +19,13 @@ The present Python implementation was developed by **Ricardo Rocha** as part of 
 
 ### Overall workflow
 
-![Auralization workflow overview](Readme_images/workflow_overview.png)
+![Auralization workflow overview](README_images/workflow_overview.png)
 
 *Figure 1. General auralization workflow. Adapted from presentation slides by Gil Felix Greco, “Sound quality assessment of SIAM aircraft”, Technische Universität Braunschweig.*
 
 ### Tonal-component workflow
 
-![Auralization workflow for tonal component](Readme_images/workflow_tonal_component.png)
+![Auralization workflow for tonal component](README_images/workflow_tonal_component.png)
 
 *Figure 2. Tonal-component auralization workflow. Adapted from presentation slides by Gil Felix Greco, “Sound quality assessment of SIAM aircraft”, Technische Universität Braunschweig.*
 
