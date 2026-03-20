@@ -14,20 +14,25 @@ The present Python implementation was developed by **Ricardo Rocha** as part of 
 - provide a transparent and fully open-source implementation for future research and development
 
 ---
-
 ## Workflow figures
 
-### Overall workflow
+### Overall auralization framework 
 
-![Auralization workflow overview](README_images/workflow_overview.png)
+![Auralization framework overview](README_images/overview_wav.png) 
 
-*Figure 1. General auralization workflow. Adapted from presentation slides by Gil Felix Greco, “Sound quality assessment of SIAM aircraft”, Technische Universität Braunschweig.*
+*Figure 1. Schematic flowchart summarizing the main processes used in the auralization framework. Adapted from Fig. 3.9 in Gil Felix Greco, **Sound quality analysis of environmental aircraft noise: framework development & applications**, PhD thesis, 2025.*
 
-### Tonal-component workflow
+### Sound synthesis procedure 
 
-![Auralization workflow for tonal component](README_images/workflow_tonal_component.png)
+![Sound synthesis procedure](README_images/overview.png) 
 
-*Figure 2. Tonal-component auralization workflow. Adapted from presentation slides by Gil Felix Greco, “Sound quality assessment of SIAM aircraft”, Technische Universität Braunschweig.*
+*Figure 2. Schematic flowchart of the sound synthesis procedure used to transform the aircraft noise predictions provided by PANAM into sound pressure signals. Adapted from Fig. 3.2 in Gil Felix Greco, **Sound quality analysis of environmental aircraft noise: framework development & applications**, PhD thesis, 2025.* 
+
+### Tonal-component workflow 
+
+![Auralization workflow for tonal component](README_images/workflow_tonal_component.png) 
+
+*Figure 3. Tonal-component auralization workflow. Adapted from presentation slides by Gil Felix Greco, “Sound quality assessment of SIAM aircraft”, Technische Universität Braunschweig.* 
 
 ---
 
