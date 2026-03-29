@@ -91,7 +91,8 @@ At the current stage, propagation is **not yet fully completed** in the Python v
 ### 1. Clone the repository 
 
 ```bash 
-git clone <https://github.com/PALILA-TUDelft/Auralization-toolbox> cd <Auralization-toolbox>
+git clone https://github.com/PALILA-TUDelft/Auralization-toolbox
+cd Auralization-toolbox
 ``` 
 
 ### 2. Create a virtual environment 
