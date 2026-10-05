@@ -15,7 +15,8 @@ def convert_freq_bands(pMspl, fM, df, t, block_len, smoothing):
         smoothing  -- int, number of smoothing iterations
 
     Returns:
-        pp         -- (nBins, nBlocks), pressure amplitudes for each frequency bin
+        pp         -- (nBins, nBlocks), pressure amplitudes for each frequency bin (post-smoothing)
+        pp_equal   -- (nBins, nBlocks), pressure amplitudes before spectral smoothing (equal distribution)
     """
     fs = globals.fs
     pref = globals.pref
@@ -31,8 +32,11 @@ def convert_freq_bands(pMspl, fM, df, t, block_len, smoothing):
 
     b = 3  # 1/3-octave
     G = 10**(3 / 10)
-    # No transpose needed if fM is already [time, bands]
-    fM = fM.T if fM.shape[0] < fM.shape[1] else fM
+    # fM must be (n_blocks, n_bands) here, i.e. the input fM was (n_bands, n_blocks); this used to be guessed from
+    # the shapes, which silently transposed the wrong way for inputs with fewer blocks than bands.
+    if fM.shape != pM.T.shape:
+        raise ValueError(f"convert_freq_bands: fM must have shape (n_bands, n_blocks) = {pM.shape}, "
+                         f"got {fM.T.shape}")
 
 
     for tt in range(min(len(t), fM.shape[0])):
@@ -41,7 +45,7 @@ def convert_freq_bands(pMspl, fM, df, t, block_len, smoothing):
 
         n = np.diff(fL) / df
 
-        max_bands = min(pM.shape[1], len(n), fM.shape[1])
+        max_bands = pM.shape[0]          # all bands (MATLAB: i = 1:size(fM,1)); pM is (n_bands, n_blocks)
         for i in range(max_bands):
             if n[i] > 0:
                 idx = (f >= fL[i]) & (f <= fL[i + 1])
@@ -61,7 +65,7 @@ def convert_freq_bands(pMspl, fM, df, t, block_len, smoothing):
 
             fMtmp = []
             for i in range(len(fMs)):
-                if fMs[i] > fL[min(5 * j, len(fL) - 1)]:
+                if fMs[i] > fL[min(5 * j - 1, len(fL) - 1)]:      # MATLAB: fL(tt, 5*j), 1-based
                     fMtmp.extend([
                         fMs[i] / G**(3 / (2 * 4**j * b)),
                         fMs[i] / G**(1 / (2 * 4**j * b)),
@@ -74,7 +78,9 @@ def convert_freq_bands(pMspl, fM, df, t, block_len, smoothing):
     if len(ff) > len(f):
         padding = np.zeros((len(ff) - len(f), len(t)))
         pp = np.vstack((p, padding))
+        pp_equal = np.vstack((p_equal, padding))
     else:
         pp = p[:len(ff), :]
+        pp_equal = p_equal[:len(ff), :]
 
-    return pp
+    return pp, pp_equal

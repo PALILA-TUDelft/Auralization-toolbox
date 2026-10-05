@@ -1,0 +1,152 @@
+--- a/CMakePresets.json
++++ b/CMakePresets.json
+@@ -12,7 +12,10 @@
+             "hidden": true,
+             "generator": "Ninja Multi-Config",
+             "binaryDir": "${sourceDir}/out/build/${presetName}",
+-            "installDir": "${sourceDir}/out/install/${presetName}"
++            "installDir": "${sourceDir}/out/install/${presetName}",
++            "cacheVariables": {
++                "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/../patches/ita/dependency-lock.cmake"
++            }
+         },
+         {
+             "name": "conf-windows-common",
+@@ -72,14 +75,38 @@
+             "description": "Settings for full Utility Lib build",
+             "hidden": true,
+             "cacheVariables": {
+-                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS": "TRUE",
+-                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_QT": "TRUE",
+-                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_MATLAB": "TRUE",
+-                "ITA_PROPAGATION_MODELS_WITH_APPS": "TRUE",
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS": "FALSE",
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_QT": "FALSE",
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_MATLAB": "FALSE",
++                "ITA_PROPAGATION_MODELS_WITH_APPS": "FALSE",
+                 "ITA_GEO_WITH_APPS": "FALSE"
+             }
+         },
+         {
++            "name": "conf-minimal",
++            "description": "Minimal build for core acoustic engine only",
++            "hidden": true,
++            "cacheVariables": {
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS": "FALSE",
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_QT": "FALSE",
++                "ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS_MATLAB": "FALSE",
++                "ITA_PROPAGATION_MODELS_WITH_APPS": "FALSE",
++                "ITA_GEO_WITH_APPS": "FALSE",
++                "ITA_VA_WITH_BINDING_MATLAB": "FALSE",
++                "ITA_VA_WITH_BINDING_PYTHON": "FALSE"
++            }
++        },
++        {
++            "name": "minimal-win-vs-msvc",
++            "description": "Minimal configuration for eigenray engine",
++            "inherits": [
++                "conf-vsbuild",
++                "conf-windows-common",
++                "conf-msvc",
++                "conf-minimal"
++            ]
++        },
++        {
+             "name": "full-win-ninja-msvc",
+             "description": "Configuration using MSBuild/VS Project as generator",
+             "inherits": [
+@@ -118,6 +145,55 @@
+                 "conf-full",
+                 "conf-dev-mode"
+             ]
++        },
++        {
++            "name": "conf-mac-common",
++            "description": "macOS settings (Apple clang + Ninja Multi-Config)",
++            "hidden": true,
++            "inherits": "conf-common",
++            "condition": {
++                "type": "equals",
++                "lhs": "${hostSystemName}",
++                "rhs": "Darwin"
++            },
++            "cacheVariables": {
++                "CMAKE_C_COMPILER": "clang",
++                "CMAKE_CXX_COMPILER": "clang++",
++                "CMAKE_OSX_DEPLOYMENT_TARGET": "10.15",
++                "CMAKE_POSITION_INDEPENDENT_CODE": "TRUE"
++            }
++        },
++        {
++            "name": "conf-linux-common",
++            "description": "Linux settings (GCC + Ninja Multi-Config)",
++            "hidden": true,
++            "inherits": "conf-common",
++            "condition": {
++                "type": "equals",
++                "lhs": "${hostSystemName}",
++                "rhs": "Linux"
++            },
++            "cacheVariables": {
++                "CMAKE_C_COMPILER": "gcc",
++                "CMAKE_CXX_COMPILER": "g++",
++                "CMAKE_POSITION_INDEPENDENT_CODE": "TRUE"
++            }
++        },
++        {
++            "name": "full-mac-ninja-clang",
++            "description": "Full build on macOS; used by tools/build_art.sh",
++            "inherits": [
++                "conf-mac-common",
++                "conf-full"
++            ]
++        },
++        {
++            "name": "full-linux-ninja-gcc",
++            "description": "Full build on Linux; used by tools/build_art.sh",
++            "inherits": [
++                "conf-linux-common",
++                "conf-full"
++            ]
+         }
+     ],
+     "buildPresets": [
+@@ -156,6 +232,24 @@
+             "description": "Debug build type with developer mode",
+             "configuration": "Debug",
+             "configurePreset": "full-win-vs-msvc-dev"
++        },
++        {
++            "name": "minimal-release-vs",
++            "description": "Minimal release build",
++            "configuration": "Release",
++            "configurePreset": "minimal-win-vs-msvc"
++        },
++        {
++            "name": "full-release-mac",
++            "description": "Release build",
++            "configuration": "Release",
++            "configurePreset": "full-mac-ninja-clang"
++        },
++        {
++            "name": "full-release-linux",
++            "description": "Release build",
++            "configuration": "Release",
++            "configurePreset": "full-linux-ninja-gcc"
+         }
+     ]
+-}
+\ No newline at end of file
++}
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -4,7 +4,8 @@
+ FetchContent_Declare (
+ 	IHTACMakeCommon
+ 	GIT_REPOSITORY https://git.rwth-aachen.de/ihta/cmake/ihtacmakecommon.git
+-	GIT_TAG main
++	# Pinned (was 'main'): see patches/ita/dependency-lock.cmake
++	GIT_TAG 4e05d29dd7593ece570532e4641fedc8379672dd
+ )
+ FetchContent_MakeAvailable (IHTACMakeCommon)
+ 

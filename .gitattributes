@@ -1,0 +1,32 @@
+# Default for every text file: store LF in the repository. This repo is edited on
+# Windows, where editors often save CRLF; without this rule git and GitHub see
+# every line of such a file as changed. Files are normalised when they are added,
+# so diffs show only the lines that really changed.
+* text=auto eol=lf
+
+# Exceptions to the LF default above.
+#
+# Shell scripts MUST arrive with LF on every platform: a CRLF shebang makes the
+# kernel fail with "bad interpreter: No such file or directory".
+*.sh            text eol=lf
+*.bash          text eol=lf
+
+# PowerShell is Windows-first; keep it CRLF.
+*.ps1           text eol=crlf
+
+# Treat data and figures as binary so git never rewrites bytes inside them
+# and never tries to show a diff.
+*.npz           binary
+*.mat           binary
+*.sofa          binary
+*.wav           binary
+*.png           binary
+*.pdf           binary
+*.dat           binary
+*.pyd           binary
+*.dll           binary
+*.dylib         binary
+*.so            binary
+
+# Patches must keep their exact bytes, or they stop applying.
+patches/**      -text

@@ -1,0 +1,50 @@
+
+====================================================================================================
+VERIFICATION REPORT
+====================================================================================================
+[PASS]  flight_profile: z                                      max|delta| = 0 m (threshold 1 m)
+[PASS]  flight_profile: TAS                                    max|delta| = 0 m/s (threshold 0.5 m/s)
+[PASS]  flight_profile: thrust                                 max|delta| = 0 kN (threshold 0.5 kN)
+[PASS]  trim_data: SPL_vs_time                                 max|delta| = 2.842e-14 dB (threshold 0.5 dB)
+[PASS]  time_vector: time_PANAM_auralization                   max|delta| = 3.553e-15 s (threshold 1e-06 s)
+[PASS]  time_vector: time                                      max|delta| = 7.105e-15 s (threshold 1e-06 s)
+[PASS]  get_tonal_input: fan tonesSPLTime                      max|delta| = 0 dB (threshold 0.5 dB)
+[PASS]  get_tonal_input: buzzsaw tonesSPLTime                  max|delta| = 1.776e-15 dB (threshold 0.5 dB)
+[PASS]  doppler_theta_buzzsaw: theta_deg                       max|delta| = 2.842e-14 deg (threshold 0.1 deg)
+[PASS]  doppler_theta_buzzsaw: doppler_ratio                   max|delta| = 3.331e-16 - (threshold 0.001 -)
+[PASS]  tonal_fan_signal: level                                dOASPL=-0.000 dB, spec_offset=-0.000 dB (threshold 0.5 dB)
+[PASS]  tonal_buzz_signal: level                               dOASPL=+0.000 dB, spec_offset=-0.143 dB (threshold 0.5 dB)
+[PASS]  bbn_narrowband (engine): SPL_narrowband                max|delta| = 0 dB (threshold 1 dB)
+[PASS]  bbn_narrowband (airframe): SPL_narrowband              max|delta| = 2.842e-14 dB (threshold 1 dB)
+[PASS]  specrogram_engine_bbn: level                           dOASPL=+0.023 dB, spec_offset=+0.010 dB (threshold 0.5 dB)
+[PASS]  airframe: level                                        dOASPL=+0.035 dB, spec_offset=-0.012 dB (threshold 0.5 dB)
+[PASS]  engine_signal_auralized: level                         dOASPL=+0.036 dB, spec_offset=+0.012 dB (threshold 0.5 dB)
+[PASS]  spectrogram_overall_signal: level                      dOASPL=+0.030 dB, spec_offset=+0.008 dB (threshold 0.5 dB)
+[PASS]  propagation: thetaReflectedRay                         max|delta| = 5.107e-15 rad (threshold 0.008727 rad)
+[PASS]  propagation: propDistanceReflectedRay                  max|delta| = 1.592e-12 m (threshold 1 m)
+[PASS]  propagation: launchAngle_direct                        max|delta| = 0.0001339 deg (threshold 0.5 deg)
+[PASS]  propagation: launchAngle_reflected                     max|delta| = 0.0001339 deg (threshold 0.5 deg)
+[PASS]  propagation: propagation_time                          [max] direct: 0, reflected: 0 s (threshold 0.001 s)
+[PASS]  propagation: spherical_direct                          [max] azimuth: 0, elevation: 0.000134 deg (threshold 1 deg)
+[PASS]  propagation: spherical_reflected                       [p99] azimuth: 0 (max 0), elevation: 2.02e-14 (max 7.11e-14) deg (threshold 1 deg)
+[PASS]  propagation: spherical_reflected_smooth                [max] azimuth: 0, elevation: 3.55e-13 deg (threshold 1 deg)
+[PASS]  propagation: |TF| direct (overhead)                    mean|delta dB| = 0.000 dB (threshold 3.0 dB)
+[PASS]  propagation: |TF| reflected (overhead)                 mean|delta dB| = 0.000 dB (threshold 3.0 dB)
+[PASS]  propagation: |TF| combined (overhead)                  mean|delta dB| = 0.000 dB (threshold 3.0 dB)
+[PASS]  apply_propagation: ir (magnitude)                      max mean|delta dB| across blocks = 0.000 dB (threshold 3.0 dB)
+[PASS]  apply_propagation: output level                        dOASPL=+0.054 dB, spec_offset=+0.025 dB (threshold 0.8 dB)
+[PASS]  fir_transfer_function: ART magnitude                   p99|delta| = 0.000 dB over in-band bins (threshold 1.0 dB, 8868/24001 bins > peak-60 dB)
+[PASS]  fir_transfer_function: FIR magnitude                   p99|delta| = 0.000 dB over in-band bins (threshold 1.0 dB, 8868/24001 bins > peak-60 dB)
+[PASS]  fir_transfer_function: t_block (same block compared)   block 158 (0-based) on both sides
+[N/A ]  binaural: HRIR direct left                             binaural_signal = 0 in this scenario
+[N/A ]  binaural: HRIR direct right                            binaural_signal = 0 in this scenario
+[N/A ]  binaural: HRIR reflected left                          binaural_signal = 0 in this scenario
+[N/A ]  binaural: HRIR reflected right                         binaural_signal = 0 in this scenario
+[N/A ]  binaural: output left level                            binaural_signal = 0 in this scenario
+[N/A ]  binaural: output right level                           binaural_signal = 0 in this scenario
+[PASS]  wav_output: attenuation_db                             |delta| = 0 dB (Python=0, MATLAB=0)
+[PASS]  wav_output: output level                               dOASPL=+0.054 dB, spec_offset=+0.025 dB (threshold 0.8 dB)
+[PASS]  Prepare_input_SQ: trimmed overall SPL                  max|delta| = 0.000 dB (threshold 0.5 dB)
+----------------------------------------------------------------------------------------------------
+TOTAL: 43   PASS: 37   FAIL: 0   SKIP: 0   N/A: 6
+====================================================================================================

@@ -1,0 +1,58 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Native build trees (ART / ITAGeometricalAcoustics bindings) ---
+# The compiled _art_core extension and the ITA DLLs are build products.
+# They are tied to one Python version and one compiler, so they are not
+# tracked here: build them with tools/build_art.ps1, or download the
+# prebuilt archive from the GitHub Release (see README).
+bindings/build/
+ITAGeometricalAcoustics/out/
+bin/
+
+# --- Run outputs ---
+output/
+gui_output/
+
+# --- Auralization results ---
+# The reference figures directly in results_auralization/ ARE tracked (the
+# README shows them), including any .wav you choose to commit there.
+#
+# The per-scenario run outputs in results_auralization/<scenario>/... (~450 MB
+# of figures plus 19 wavs) are regenerable and ship as Release archives:
+#   powershell -File tools/pack_release_data.ps1 -IncludeResults
+results_auralization/*/
+
+# Output accidentally written into the input folder by an earlier run.
+input_data/results_auralization/
+
+# --- Verification data ---
+# The comparison scripts, manifests, scenario parameters, grade reports and
+# VERIFICATION_MAP.md ARE tracked. The per-scenario numeric dumps (~5.8 GB)
+# and the generated plot-comparison report are distributed as separate
+# archives instead:   powershell -File tools/pack_release_data.ps1
+#
+# This rule only affects files not already tracked. The 24 reference .npz/.mat
+# files committed before it stay tracked; see the README.
+verification/**/*.npz
+verification/**/*.mat
+verification/**/*.log
+
+# Generated plot-comparison report: the .html files are useless without the
+# ~220 MB of assets they embed, so the whole directory ships as an archive.
+verification/plot_comparison/
+
+# Archives produced by tools/pack_release_data.ps1
+dist/
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*~
