@@ -1,3 +1,5 @@
 numpy>=1.24
-scipy>=1.10
+scipy>=1.15  # scipy.special.sph_harm_y (HRTF interpolation) needs 1.15+
 matplotlib>=3.7
+sofar>=1.1
+customtkinter>=5.2

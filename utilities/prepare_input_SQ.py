@@ -19,17 +19,19 @@ def prepare_input_SQ(source_data, spectrogram, spectrogram_dBA, flight_profile, 
         source_data_trimmed, spectrogram_trimmed, spectrogram_dBA_trimmed, flight_profile_trimmed
     """
     time_vector = [d["source_time"] for d in source_data]
+    # MATLAB: [~, ind] = unique(time_PANAM): first occurrence of each time value, ordered by time value
     _, unique_indices = np.unique(time_vector, return_index=True)
-    unique_indices = sorted(unique_indices)
 
     # Remove duplicated time steps
     source_data_unique = [source_data[i] for i in unique_indices]
 
-    def trim_dict_fields(d, indices, fields):
+    def trim_dict_fields(d, indices, fields, first_indices=None):
         result = {}
         for k, v in d.items():
             if k in fields:
                 v = np.array(v)
+                if first_indices is not None:
+                    v = v[:, first_indices] if v.ndim == 2 else v[first_indices]
                 if v.ndim == 2:
                     result[k] = v[:, indices]
                 elif v.ndim == 1:
@@ -60,8 +62,9 @@ def prepare_input_SQ(source_data, spectrogram, spectrogram_dBA, flight_profile, 
     ]
 
     # Trim spectrogram and spectrogram_dBA
-    spectrogram_trimmed = trim_dict_fields(spectrogram, time_slice, spec_fields)
-    spectrogram_dBA_trimmed = trim_dict_fields(spectrogram_dBA, time_slice, spec_dba_fields)
+    # (repeated time steps are removed first, like MATLAB does for input_2 / input_3)
+    spectrogram_trimmed = trim_dict_fields(spectrogram, time_slice, spec_fields, unique_indices)
+    spectrogram_dBA_trimmed = trim_dict_fields(spectrogram_dBA, time_slice, spec_dba_fields, unique_indices)
 
     # Trim flight profile
     flight_profile_trimmed = {

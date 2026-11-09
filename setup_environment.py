@@ -19,16 +19,6 @@ def setup_paths(base_path=None):
     add_path(base_path / 'auralization')
     add_path(base_path / 'utilities')
 
-    # Third-party dependencies
-    third_party = base_path / 'third_party'
-    add_path(third_party / 'ITA-Toolbox')
-    add_path(third_party / 'ARTMatlab_v2023a')
-    add_path(third_party / 'Faddeeva_MATLAB')
-    add_path(third_party / 'AKtools')
-    add_path(third_party / 'AKtools' / 'Plotting')
-    add_path(third_party / 'AKtools' / 'Plotting' / 'cbrewer')
-    add_path(third_party / 'FABIAN_HRTF_DATABASE_v4')
-
     print("Environment setup completed.")
 
 if __name__ == "__main__":
