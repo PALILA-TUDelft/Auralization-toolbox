@@ -215,6 +215,12 @@ bash 3.2 that macOS ships.
 
 Differences from Windows that the build accounts for:
 
+- **Tracking library.** ITA's IHTAUtilityLibs also builds a motion-tracking
+  library that needs the OptiTrack NatNet SDK, which exists for Windows only.
+  `build_art.sh` configures with `-DWITH_IHTA_TRACKING=OFF`; ART does not use it
+  (it is not among the files in `bin/`). Without the switch, configuring stops
+  with `Could not find a package configuration file provided by "NatNetSDK"`.
+  If you run CMake by hand, pass the same switch.
 - **Library lookup.** Windows is told where the DLLs are when the module is
   imported. macOS and Linux resolve shared libraries through a path stored in the
   module when it is linked, so the module is linked with `@loader_path` (macOS) /

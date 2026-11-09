@@ -125,8 +125,12 @@ if [ "$SKIP_ITA" -eq 0 ]; then
         LOCAL_ONLY="-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
     fi
 
+    # WITH_IHTA_TRACKING=OFF: IHTAUtilityLibs builds an optional tracking library
+    # that needs the OptiTrack NatNet SDK, which only exists for Windows. Without
+    # this switch CMake stops with 'Could not find ... "NatNetSDK"'. ART does not
+    # use the tracking library (its DLL is not among the files in bin/).
     step "Configuring ITAGeometricalAcoustics (preset $PRESET)"
-    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY ); then
+    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY -DWITH_IHTA_TRACKING=OFF ); then
         echo >&2
         echo "ITA configuration failed." >&2
         echo "If an EARLIER configure was interrupted (network error, Ctrl+C) and the message above" >&2
