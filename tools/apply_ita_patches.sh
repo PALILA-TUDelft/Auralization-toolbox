@@ -82,7 +82,9 @@ if [ -d "$PATCH_DIR/files" ]; then
     for subdir in "$PATCH_DIR/files"/*/; do
         [ -d "$subdir" ] || continue
         name="$(basename "$subdir")"
-        dest="$ITA_ROOT/$name"
+        # files/ITAGeometricalAcoustics/... lands in the ITA root, the other folders in the
+        # submodule of the same name
+        if [ "$name" = "ITAGeometricalAcoustics" ]; then dest="$ITA_ROOT"; else dest="$ITA_ROOT/$name"; fi
         if [ ! -d "$dest" ]; then
             echo "Submodule '$name' is not checked out." >&2
             exit 1

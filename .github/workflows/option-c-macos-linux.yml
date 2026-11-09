@@ -52,7 +52,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           xcode-select -p
-          brew install ninja gpatch   # gpatch: GNU patch, see tools/build_art.sh
+          brew install ninja gpatch libomp   # gpatch: GNU patch, libomp: OpenMP (see tools/build_art.sh)
 
       - name: Versions in use
         run: |
@@ -85,9 +85,11 @@ jobs:
           # Annotations show up on the run's summary page (and in the API) without opening
           # the multi-thousand-line log. '%' must be escaped as %25, newlines as %0A.
           [ -f build.log ] || exit 0
-          grep -n -E 'CMake Error|[Ee]rror:|FAILED:|fatal error|undefined reference|ninja: build stopped' build.log             | head -8 | sed 's/%/%25/g' | while IFS= read -r line; do echo "::error::${line}"; done
-          msg="$(tail -n 40 build.log | awk '{ gsub(/%/, "%25"); printf "%s%%0A", $0 }')"
-          echo "::error title=Last 40 lines of the build log::${msg}"
+          # every CMake / compiler error with the lines that follow it (the message itself)
+          errors="$(grep -n -A9 -E 'CMake Error|[Ee]rror:|FAILED:|fatal error|undefined reference|ninja: build stopped' build.log             | head -150 | awk '{ gsub(/%/, "%25"); printf "%s%%0A", $0 }')"
+          echo "::error title=Errors in the build log, with context::${errors}"
+          msg="$(tail -n 30 build.log | awk '{ gsub(/%/, "%25"); printf "%s%%0A", $0 }')"
+          echo "::error title=Last 30 lines of the build log::${msg}"
 
       - name: Ray-trace check (expects 2 rays, [0, 1])
         run: |

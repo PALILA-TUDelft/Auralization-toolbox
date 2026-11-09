@@ -115,7 +115,9 @@ if ($failed.Count -gt 0) {
 $filesRoot = Join-Path $PatchDir 'files'
 if (Test-Path $filesRoot) {
     foreach ($subDir in Get-ChildItem -Path $filesRoot -Directory) {
-        $dest = Join-Path $ItaRoot $subDir.Name
+        # files/ITAGeometricalAcoustics/... lands in the ITA root, the other folders in the
+        # submodule of the same name
+        $dest = if ($subDir.Name -eq 'ITAGeometricalAcoustics') { $ItaRoot } else { Join-Path $ItaRoot $subDir.Name }
         if (-not (Test-Path $dest)) {
             throw "Submodule '$($subDir.Name)' is not checked out."
         }

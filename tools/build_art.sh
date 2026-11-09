@@ -4,7 +4,7 @@
 # the ITA shared libraries, into bin/ where the toolbox looks for it.
 #
 # POSIX counterpart of build_art.ps1. Steps:
-#   1. check for git / cmake / ninja / python3 / nanobind (and gpatch on macOS)
+#   1. check for git / cmake / ninja / python3 / nanobind (and gpatch + libomp on macOS)
 #   2. git submodule update --init --recursive
 #   3. apply the local ITA patches
 #   4. configure ITAGeometricalAcoustics, verify the dependency lock, build (Release)
@@ -109,6 +109,22 @@ if [ "$PLATFORM" = "macOS" ]; then
     fi
     echo "  gpatch : $GPATCH"
     ITA_EXTRA_ARGS+=("-DPATCH_EXECUTABLE=$GPATCH")
+
+    # Apple's clang has no OpenMP (ITAPropagationPathSim requires it). Homebrew's libomp
+    # provides it, but CMake's FindOpenMP does not look there, so say where it is.
+    LIBOMP="$(brew --prefix libomp 2>/dev/null || true)"
+    if [ -z "$LIBOMP" ] || [ ! -f "$LIBOMP/lib/libomp.dylib" ]; then
+        echo "libomp (OpenMP for Apple clang) not found. Run: brew install libomp" >&2
+        exit 1
+    fi
+    echo "  libomp : $LIBOMP"
+    ITA_EXTRA_ARGS+=(
+        "-DOpenMP_C_FLAGS=-Xpreprocessor -fopenmp -I$LIBOMP/include"
+        "-DOpenMP_CXX_FLAGS=-Xpreprocessor -fopenmp -I$LIBOMP/include"
+        "-DOpenMP_C_LIB_NAMES=omp"
+        "-DOpenMP_CXX_LIB_NAMES=omp"
+        "-DOpenMP_omp_LIBRARY=$LIBOMP/lib/libomp.dylib"
+    )
 fi
 
 if [ "$SKIP_ITA" -eq 0 ]; then
@@ -145,8 +161,11 @@ if [ "$SKIP_ITA" -eq 0 ]; then
     # that needs the OptiTrack NatNet SDK, which only exists for Windows. Without
     # this switch CMake stops with 'Could not find ... "NatNetSDK"'. ART does not
     # use the tracking library (its DLL is not among the files in bin/).
+    # WITH_IHTA_PROFILER=OFF: IHTAUtilityLibs asks for the folder 'IHTAPROFILER' but it is
+    # named 'IHTAProfiler'; that only works on case-insensitive file systems (Windows, and
+    # macOS by default), so CMake stops on Linux. ART does not use the profiler library.
     step "Configuring ITAGeometricalAcoustics (preset $PRESET)"
-    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY -DWITH_IHTA_TRACKING=OFF ${ITA_EXTRA_ARGS[@]+"${ITA_EXTRA_ARGS[@]}"} ); then
+    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY -DWITH_IHTA_TRACKING=OFF -DWITH_IHTA_PROFILER=OFF ${ITA_EXTRA_ARGS[@]+"${ITA_EXTRA_ARGS[@]}"} ); then
         echo >&2
         echo "ITA configuration failed." >&2
         echo "If an EARLIER configure was interrupted (network error, Ctrl+C) and the message above" >&2

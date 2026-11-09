@@ -198,7 +198,7 @@ and others not. Run the script again with `-CleanIta` (`--clean-ita` for
 > you find.
 
 ```bash
-# macOS:   xcode-select --install && brew install cmake ninja gpatch
+# macOS:   xcode-select --install && brew install cmake ninja gpatch libomp
 # Debian:  sudo apt install build-essential cmake ninja-build patchelf
 
 git clone --recurse-submodules https://github.com/<owner>/Auralization-toolbox
@@ -215,12 +215,20 @@ bash 3.2 that macOS ships.
 
 Differences from Windows that the build accounts for:
 
+- **OpenMP.** `ITAPropagationPathSim` needs OpenMP, which Apple's clang does not
+  include. `build_art.sh` uses Homebrew's `libomp` (`brew install libomp`) and tells
+  CMake where it is. The built libraries then depend on that `libomp.dylib`, so
+  a Mac that runs them needs `libomp` installed too.
 - **GNU patch.** CMake applies the dependency patches with the first `patch` on
   the machine. On macOS that is Apple's BSD patch, which rejects this
   repository's patches with `2 out of 2 hunks failed` (the patch files have CRLF
   line endings, the sources they change have LF). `build_art.sh` therefore needs
   GNU patch (`brew install gpatch`) and passes it to CMake as `PATCH_EXECUTABLE`.
   Linux and Git for Windows already ship GNU patch.
+- **Profiler library.** IHTAUtilityLibs asks for a folder `IHTAPROFILER` that is
+  really named `IHTAProfiler`: fine on Windows and on a default macOS file system,
+  an error on Linux. `build_art.sh` configures with `-DWITH_IHTA_PROFILER=OFF`; ART
+  does not use it.
 - **Tracking library.** ITA's IHTAUtilityLibs also builds a motion-tracking
   library that needs the OptiTrack NatNet SDK, which exists for Windows only.
   `build_art.sh` configures with `-DWITH_IHTA_TRACKING=OFF`; ART does not use it
@@ -397,6 +405,7 @@ out with LF or CRLF line endings.
 | `ITAGeo-unix.patch` | downloads and uses `FindSketchUpAPI.cmake` only `if (WIN32)` | Its Find module stops with `SketchUpAPI is only available on Win/Mac` on Linux, and SketchUp is not used outside Windows. |
 | | guards `set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs ...)` with `if (TARGET ...)` | assimp defines that target only in its MSVC build; elsewhere CMake stops with `set_property could not find TARGET`. No effect on Windows. |
 | `ITAPropagationModels.patch` | removes the `netcdf-cxx4` link and target setup from `pelican` and `external_libs` | The dependency is now defined once, in ITAGeo. |
+| `files/ITAGeometricalAcoustics/integration/pkg-config/tbb.pc.in` | copied into the ITA root (a copy of the file from oneTBB v2021.3.0) | Outside Windows, oneTBB reads `${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in`, which only exists when oneTBB is the top-level project. Without the copy CMake stops with `File ... tbb.pc.in does not exist`. |
 | `files/.../netcdf-cxx4.patch` | removes `INCLUDE_DIRECTORIES(".")` and wraps the include directory in `$<BUILD_INTERFACE:>` / `$<INSTALL_INTERFACE:include>` | The upstream target publishes an absolute source-tree include path, which CMake does not allow in an installable target. |
 
 `netcdf-cxx4` is configured but **never compiled** for ART: the build only
