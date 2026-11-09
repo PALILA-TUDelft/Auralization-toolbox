@@ -5,9 +5,8 @@ a plain `git clone` is enough to run the propagation code. Nothing has to be
 downloaded or compiled. The toolbox finds this folder by itself.
 
 **Only for Windows x64 with Python 3.13.** The module
-`_art_core.cp313-win_amd64.pyd` loads on that interpreter and on no other. Any
-other Python version, macOS and Linux build ART from source: see
-[BUILD.md](../BUILD.md).
+`_art_core.cp313-win_amd64.pyd` loads on that interpreter and on no other. For
+any other Python version, build ART from source: see [BUILD.md](../BUILD.md).
 
 The Microsoft Visual C++ Redistributable (x64, 14.29 or newer) must be installed;
 Python usually installs it.

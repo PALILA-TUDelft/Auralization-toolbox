@@ -149,9 +149,9 @@ what the repository's `.venv` had installed on 2026-11-09.
 ## Local patches
 
 ITA is a git submodule, so changes to it live in [patches/ita/](patches/ita/) and
-are replayed by `tools/apply_ita_patches.ps1` (`.sh` on macOS and Linux).
-On Windows `ITAPropagationPathSim` has no local changes, so the **ray-tracing code is
-unmodified upstream code**; on macOS and Linux only seven `#include` path separators differ. Every local change is to build configuration.
+are replayed by `tools/apply_ita_patches.ps1`.
+`ITAPropagationPathSim` has no local changes, so the **ray-tracing code is
+unmodified upstream code**. Every local change is to build configuration.
 
 All patches below were confirmed applied, and the checkout has no other edits
 (line endings aside; on Windows `git status` shows many files as modified because
@@ -164,7 +164,6 @@ of them).
 | `CMakePresets.json`, `conf-common` | sets `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` to `${sourceDir}/../patches/ita/dependency-lock.cmake` | Loads the lock. The path requires ITA to be at the repository root. | **Required.** Without it the five libraries in the lock float. |
 | `CMakePresets.json`, `conf-full` | turns off `ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS`, `_APPS_QT`, `_APPS_MATLAB`, `ITA_PROPAGATION_MODELS_WITH_APPS` | The apps need Qt and MATLAB. | Required unless Qt and MATLAB are available. |
 | `CMakePresets.json` | adds `conf-minimal`, `minimal-win-vs-msvc`, `minimal-release-vs` | Core-engine-only configuration. | Optional; the default build does not use it. |
-| `CMakePresets.json` | adds `conf-mac-common`, `conf-linux-common`, `full-mac-ninja-clang`, `full-linux-ninja-gcc`, `full-release-mac`, `full-release-linux` | Used by `build_art.sh`. Untested. | Drop if upstream adds equivalents, and update `build_art.sh` and `bindings/CMakeLists.txt`. |
 | `CMakeLists.txt` | pins `IHTACMakeCommon` (was `main`) | Reproducibility. Fetched before `project()`, so the lock file cannot reach it. | **Required.** Update the commit. |
 
 ### `ITAGeo.patch` (applied to `ITAGeo/`)
@@ -272,4 +271,4 @@ cannot run twice, and `-CleanIta` deletes it.
   comparing commits after a configure.
 - **Python runtime packages have no upper bounds**, so a new install can get newer
   versions than those listed here.
-- **macOS and Linux builds have never been run.**
+- **Only tested on Windows.**

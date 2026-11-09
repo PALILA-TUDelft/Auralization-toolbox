@@ -10,29 +10,18 @@ project (ARTPython LANGUAGES CXX)
 #   cmake -B build -DCMAKE_BUILD_TYPE=Release
 #   cmake --build build --config Release
 #
-# The resulting module is _art_core.pyd on Windows (in build/Release/) and
-# _art_core*.so on macOS / Linux (in build/). Copy it, together with the ITA
-# runtime libraries, into the repository's bin/ directory, which is the first
-# place the Python loader looks. tools/build_art.ps1 (Windows) and
-# tools/build_art.sh (macOS / Linux) do that for you.
+# The resulting module is _art_core*.pyd (in build/Release/). Copy it, together
+# with the ITA DLLs, into the repository's bin/ directory, which is the first
+# place the Python loader looks. tools/build_art.ps1 does that for you.
 #
-# Platform note: only the Windows build is tested. The macOS / Linux paths
-# below are written to be correct but have not been exercised - upstream
-# ITAGeometricalAcoustics is CI-tested on Windows only.
+# Only tested on Windows.
 # --------------------------------------------------------------------------
 
 # --- Paths to the pre-built ITAGeometricalAcoustics ---
 set (ITA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../ITAGeometricalAcoustics"
      CACHE PATH "Root of the ITAGeometricalAcoustics source tree")
 
-if (WIN32)
-	set (_ita_default_preset "full-win-vs-msvc")
-elseif (APPLE)
-	set (_ita_default_preset "full-mac-ninja-clang")
-else ()
-	set (_ita_default_preset "full-linux-ninja-gcc")
-endif ()
-set (ITA_BUILD_DIR "${ITA_ROOT}/out/build/${_ita_default_preset}"
+set (ITA_BUILD_DIR "${ITA_ROOT}/out/build/full-win-vs-msvc"
      CACHE PATH "Build directory of ITAGeometricalAcoustics")
 
 # --- Find Python + nanobind ---
@@ -67,10 +56,7 @@ target_include_directories (_art_core PRIVATE
 )
 
 # --- Link against the pre-built ITA libraries ---------------------------
-# Resolved by name rather than hardcoded, so the correct platform suffix is
-# picked up: .lib (Windows import library), .dylib (macOS), .so (Linux).
-# ITA uses the "Ninja Multi-Config" generator, so Release/ appears in the
-# path on every platform; the plain lib/ hints cover a single-config build.
+# Resolved by name rather than hardcoded (the .lib import libraries).
 set (_ita_lib_hints
 	"${ITA_BUILD_DIR}/Release/lib"
 	"${ITA_BUILD_DIR}/lib/Release"
@@ -99,29 +85,4 @@ endforeach ()
 
 target_link_libraries (_art_core PRIVATE ${_ita_libs})
 
-# --- Runtime library lookup ----------------------------------------------
-# On Windows the loader is told where the DLLs are at import time (Python's
-# os.add_dll_directory). macOS and Linux resolve shared libraries through a
-# path baked into the module at link time instead, so point it at its own
-# directory: dropping _art_core.so next to the ITA .dylib/.so files in bin/
-# is then enough, with no DYLD_LIBRARY_PATH (which macOS SIP strips anyway).
-if (APPLE)
-	set_target_properties (_art_core PROPERTIES
-		BUILD_WITH_INSTALL_RPATH TRUE
-		INSTALL_RPATH "@loader_path;@loader_path/../lib"
-	)
-elseif (UNIX)
-	set_target_properties (_art_core PROPERTIES
-		BUILD_WITH_INSTALL_RPATH TRUE
-		INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib"
-	)
-endif ()
-
-# _USE_MATH_DEFINES is a no-op outside MSVC but harmless.
-#
-# Deliberately NOT defined here: Vista's DARWIN macro. VistaCoreLibs guards
-# its Mach-native code paths on `defined DARWIN`, which its own CMake never
-# sets, so the ITA libraries are compiled against Vista's generic POSIX
-# fallback. Defining DARWIN only for this module would change the layout of
-# VistaDefaultTimerImp and give an ABI mismatch against those libraries.
 target_compile_definitions (_art_core PRIVATE _USE_MATH_DEFINES)

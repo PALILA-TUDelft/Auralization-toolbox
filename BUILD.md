@@ -17,7 +17,6 @@ This page is the complete reference. The README has a short version.
 [Tested environment](#tested-environment) ·
 [Option A: prebuilt binaries](#option-a-prebuilt-binaries-windows-python-313) ·
 [Option B: build on Windows](#option-b-build-from-source-on-windows) ·
-[Option C: macOS and Linux](#option-c-build-from-source-on-macos-and-linux) ·
 [Check the installation](#check-the-installation) ·
 [Reproducibility](#reproducibility) ·
 [Local changes to ITA](#local-changes-to-ita) ·
@@ -32,7 +31,6 @@ This page is the complete reference. The README has a short version.
 |---|---|---|
 | Windows x64 and **Python 3.13** | [Option A](#option-a-prebuilt-binaries-windows-python-313) (the binaries are in the repository) | none: `git clone` is enough |
 | Windows x64 and another Python version | [Option B](#option-b-build-from-source-on-windows) | long build, about 25 minutes |
-| macOS or Linux | [Option C](#option-c-build-from-source-on-macos-and-linux) | long build, **not yet verified** |
 | no need for propagation | nothing to install | none |
 
 The compiled module is tied to the Python minor version it was built with:
@@ -56,6 +54,8 @@ It has not been tried on a different computer.
 | ITAGeometricalAcoustics | `ITAGeometricalAcoustics_v2025a-1-g59dbdda` (git submodule) |
 | Build | Release, shared libraries |
 
+ART has only been tested on Windows.
+
 **Only Visual Studio 2019 is supported.** ITA's CMake preset hard-codes the
 `Visual Studio 16 2019` generator, and `tools/build_art.ps1` checks for it
 before doing anything else.
@@ -69,9 +69,8 @@ before doing anything else.
 | Eigenrays from this build against the original development build, 36 cases (4 geometries, 3 atmospheres, no/constant/logarithmic wind) | 72 of 72 rays bit-for-bit identical |
 | `bin/` against the original build | the same 15 files, the same sizes |
 | Running `build_art.ps1` a second time | succeeds in about a minute |
-| `apply_ita_patches.ps1` and `apply_ita_patches.sh` on a pristine checkout, then again | both patch it, then skip |
+| `apply_ita_patches.ps1` on a pristine checkout, then again | patches it, then skips |
 | Option A: a copy of the repository with no `bin/` and no build tree, only `prebuilt/win-x64-py313/` | ART becomes available and traces rays (`2 [0, 1]`) |
-| macOS and Linux (Option C) | **not tested** |
 
 ---
 
@@ -186,78 +185,8 @@ tree, pass the same option.
 
 The one case this cannot cover is a **first configure that was interrupted**
 (network error, Ctrl+C): the half-populated tree has some dependencies patched
-and others not. Run the script again with `-CleanIta` (`--clean-ita` for
-`build_art.sh`) to configure ITA from scratch.
-
-## Option C: build from source on macOS and Linux
-
-> **Not verified.** ITA is tested upstream on Windows only (every job in its CI
-> runs on a Windows runner). The path below is written out in full and was
-> reviewed against the dependency sources, but it has **not been run on macOS or
-> Linux**. Treat the first build as a porting exercise, and please report what
-> you find.
-
-```bash
-# macOS:   xcode-select --install && brew install cmake ninja gpatch libomp
-# Debian:  sudo apt install build-essential cmake ninja-build patchelf
-
-git clone --recurse-submodules https://github.com/<owner>/Auralization-toolbox
-cd Auralization-toolbox
-python3 -m venv .venv && source .venv/bin/activate
-python -m pip install -r requirements.txt -r requirements-build.txt
-bash tools/build_art.sh      # or ./tools/build_art.sh once the file is executable
-```
-
-`build_art.sh` mirrors the PowerShell script. It uses the ITA presets
-`full-mac-ninja-clang` / `full-linux-ninja-gcc` (added by the local changes),
-and takes `--skip-ita`, `--clean` and `--preset <name>`. It runs under the
-bash 3.2 that macOS ships.
-
-Differences from Windows that the build accounts for:
-
-- **OpenMP.** `ITAPropagationPathSim` needs OpenMP, which Apple's clang does not
-  include. `build_art.sh` uses Homebrew's `libomp` (`brew install libomp`) and tells
-  CMake where it is. The built libraries then depend on that `libomp.dylib`, so
-  a Mac that runs them needs `libomp` installed too.
-- **GNU patch.** CMake applies the dependency patches with the first `patch` on
-  the machine. On macOS that is Apple's BSD patch, which rejects this
-  repository's patches with `2 out of 2 hunks failed` (the patch files have CRLF
-  line endings, the sources they change have LF). `build_art.sh` therefore needs
-  GNU patch (`brew install gpatch`) and passes it to CMake as `PATCH_EXECUTABLE`.
-  Linux and Git for Windows already ship GNU patch.
-- **Profiler library.** IHTAUtilityLibs asks for a folder `IHTAPROFILER` that is
-  really named `IHTAProfiler`: fine on Windows and on a default macOS file system,
-  an error on Linux. `build_art.sh` configures with `-DWITH_IHTA_PROFILER=OFF`; ART
-  does not use it.
-- **Tracking library.** ITA's IHTAUtilityLibs also builds a motion-tracking
-  library that needs the OptiTrack NatNet SDK, which exists for Windows only.
-  `build_art.sh` configures with `-DWITH_IHTA_TRACKING=OFF`; ART does not use it
-  (it is not among the files in `bin/`). Without the switch, configuring stops
-  with `Could not find a package configuration file provided by "NatNetSDK"`.
-  If you run CMake by hand, pass the same switch.
-- **Library lookup.** Windows is told where the DLLs are when the module is
-  imported. macOS and Linux resolve shared libraries through a path stored in the
-  module when it is linked, so the module is linked with `@loader_path` (macOS) /
-  `$ORIGIN` (Linux), and `build_art.sh` makes the staged libraries relocatable
-  with `install_name_tool` / `patchelf`. `DYLD_LIBRARY_PATH` is deliberately not
-  used: macOS strips it for protected processes.
-- **Library names.** `bindings/CMakeLists.txt` finds the ITA libraries by name
-  with `find_library`, so `.dylib` and `.so` are picked up as well as `.lib`.
-- **Vista.** ITA's Vista library has native macOS timer code that its own CMake
-  never enables, so it compiles the generic POSIX branch (`clock_gettime`),
-  which macOS 10.12+ has. **Do not define Vista's `DARWIN` macro** for the
-  bindings alone: that changes the layout of one of Vista's classes and gives an
-  ABI mismatch against the ITA libraries.
-
-If importing fails after a successful build, look at the library paths:
-
-```bash
-otool -L bin/_art_core*.so      # macOS
-ldd      bin/_art_core*.so      # Linux
-```
-
-Anything that still points into a build directory, or a missing `@loader_path` /
-`$ORIGIN` entry, means the relocation step did not take.
+and others not. Run the script again with `-CleanIta` to configure ITA from
+scratch.
 
 ## Check the installation
 
@@ -279,7 +208,7 @@ The toolbox looks for the binaries in this order, and uses the first that works:
 
 1. the directories in the environment variables `ART_DLL_DIR` (the ITA libraries)
    and `ART_PYD_DIR` (`_art_core`);
-2. `bin/` in the repository root (what `build_art.ps1` / `build_art.sh` write);
+2. `bin/` in the repository root (what `build_art.ps1` writes);
 3. `prebuilt/<platform>-py<version>/`, the binaries committed to the repository
    (`prebuilt/win-x64-py313/` on Windows x64 with Python 3.13);
 4. the in-tree build output (`ITAGeometricalAcoustics/out/build/<preset>/Release`
@@ -324,8 +253,8 @@ configure ITA by hand without `--preset`, nothing is pinned.
 
 ### Verifying
 
-`build_art.ps1` and `build_art.sh` run this right after configuring ITA and
-stop if anything differs. You can run it yourself at any time:
+`build_art.ps1` runs this right after configuring ITA and
+stops if anything differs. You can run it yourself at any time:
 
 ```bash
 python tools/verify_dependency_lock.py                # default build directory
@@ -387,35 +316,22 @@ once without the lock, then regenerate `dependency-lock.json` and the commits in
 
 ITA is a git submodule, which records only an upstream commit, so changes to it
 cannot be committed here. They are kept as patches in [patches/ita/](patches/ita/)
-and applied by `tools/apply_ita_patches.ps1` (`.sh` on macOS/Linux). The scripts
-are safe to run repeatedly: a patch that is already applied is skipped. They
-apply with `--ignore-whitespace`, so they work whether the submodule was checked
+and applied by `tools/apply_ita_patches.ps1`. The script
+is safe to run repeatedly: a patch that is already applied is skipped. It
+applies with `--ignore-whitespace`, so it works whether the submodule was checked
 out with LF or CRLF line endings.
 
 | File | Change | Why |
 |---|---|---|
 | `ITAGeometricalAcoustics.patch` | `conf-full` turns off `ITA_GEOMETRICAL_ACOUSTICS_WITH_APPS`, `_APPS_QT`, `_APPS_MATLAB` and `ITA_PROPAGATION_MODELS_WITH_APPS` | The apps need Qt and MATLAB and are not needed for ART. |
 | | adds the `minimal-win-vs-msvc` preset | A configuration for the core engine only. |
-| | adds the `full-mac-ninja-clang` and `full-linux-ninja-gcc` presets | Used by `build_art.sh`. Untested. |
 | | sets `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` | Loads the dependency lock. |
 | | pins `IHTACMakeCommon` in `CMakeLists.txt` | Reproducibility. |
 | `ITAGeo.patch` | `if (WIN32)` becomes `if (WIN32 AND SketchUpAPI_FOUND)` | The SketchUp library is optional. Without this guard the build sets a property on a target that does not exist and CMake stops. |
 | | adds `netcdf-cxx4` v4.3.1 with `netcdf-cxx4.patch` | netcdf-cxx4 is needed by ITA; the patch below is applied to it. |
 | | pins `ITACoreLibs` | Reproducibility. |
-| `ITAGeo-unix.patch` | downloads and uses `FindSketchUpAPI.cmake` only `if (WIN32)` | Its Find module stops with `SketchUpAPI is only available on Win/Mac` on Linux, and SketchUp is not used outside Windows. |
-| | guards `set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs ...)` with `if (TARGET ...)` | assimp defines that target only in its MSVC build; elsewhere CMake stops with `set_property could not find TARGET`. No effect on Windows. |
 | `ITAPropagationModels.patch` | removes the `netcdf-cxx4` link and target setup from `pelican` and `external_libs` | The dependency is now defined once, in ITAGeo. |
-| `files/ITAGeometricalAcoustics/integration/pkg-config/tbb.pc.in` | copied into the ITA root (a copy of the file from oneTBB v2021.3.0) | Outside Windows, oneTBB reads `${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in`, which only exists when oneTBB is the top-level project. Without the copy CMake stops with `File ... tbb.pc.in does not exist`. |
-| `ITAPropagationModels-unix.patch` (**not on Windows**) | `ITApropagationModels` becomes `ITAPropagationModels` in the source lists | The folder is spelled differently from the CMake file, which only works on case-insensitive file systems. |
-| `ITAPropagationPathSim-unix.patch` (**not on Windows**) | `\` becomes `/` in seven `#include` lines | Only MSVC accepts backslashes in include paths. Nothing else in the ray-tracing code is changed. |
-| `itacorelibs-unix.patch` (applied by `dependency-lock.cmake`, **not on Windows**) | `ITABase/src/CMakeLists.txt`: `add_subdirectory (simpleini)` only `if (WIN32)`; `ITACTC/CMakeLists.txt`: file names corrected to `...Streamfilter` | Outside Windows `simpleini` is already added earlier in the same file, and adding it twice is a CMake error (`The binary directory ... is already used to build a source directory`). |
-| `ihtautilitylibs-unix.patch` (same, **not on Windows**) | quotes `${CMAKE_RUNTIME_OUTPUT_DIRECTORY}` and the two similar variables in `IHTAInstrumentation/external_libs/CMakeLists.txt` | They are empty outside Windows, which leaves `set_target_properties` with an odd number of arguments (`called with incorrect number of arguments`). |
 | `files/.../netcdf-cxx4.patch` | removes `INCLUDE_DIRECTORIES(".")` and wraps the include directory in `$<BUILD_INTERFACE:>` / `$<INSTALL_INTERFACE:include>` | The upstream target publishes an absolute source-tree include path, which CMake does not allow in an installable target. |
-
-The two `*-unix.patch` files change dependencies that CMake downloads (ITACoreLibs
-and IHTAUtilityLibs), not the ITA submodule. They are attached to the downloads in
-`patches/ita/dependency-lock.cmake` and only on macOS and Linux, so the Windows build
-is exactly the one that was verified.
 
 `netcdf-cxx4` is configured but **never compiled** for ART: the build only
 builds `ITAGeo` and `ITAPropagationPathSim`. The `netcdf-cxx4` changes therefore
@@ -453,7 +369,7 @@ Visual Studio versions are not a substitute: ITA's preset asks for the
 **`Reversed (or previously applied) patch detected`** while configuring ITA.
 An earlier configure was interrupted (network error, Ctrl+C), which leaves a
 half-finished tree that cannot be patched a second time. Run
-`tools\build_art.ps1 -CleanIta` (`./tools/build_art.sh --clean-ita`) to configure
+`tools\build_art.ps1 -CleanIta` to configure
 ITA from scratch. A tree that configured completely is re-used safely: the script
 re-configures it in local-only mode, so nothing is fetched or patched again.
 
@@ -492,7 +408,7 @@ prompt), and clone into a short folder such as `C:\dev\`.
 **Disk space.** About 5 GB: the ITA build directory alone is 3.6 GB.
 
 If something here does not match what you see, open an issue with the full output
-of `tools\build_art.ps1` (or `.sh`).
+of `tools\build_art.ps1`.
 
 ---
 

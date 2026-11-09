@@ -92,12 +92,6 @@ cd Auralization-toolbox
 python -m venv .venv .venv\Scripts\activate
 ``` 
 
-#### macOS / Linux
-
-```bash 
-python3 -m venv .venv source .venv/bin/activate
-``` 
-
 ### 3. Install dependencies 
 
 ```bash 
@@ -340,10 +334,7 @@ explaining how to install it.
 
 ### Platform support
 
-| Platform | Propagation (ART) | Everything else |
-|---|---|---|
-| Windows x64 | supported, prebuilt binaries available | supported |
-| macOS, Linux | build from source (not yet tested) | supported |
+ART has only been tested on Windows.
 
 The compiled module only works with the Python version it was built for. The prebuilt binaries are for **Python 3.13**.
 
@@ -379,21 +370,6 @@ powershell -ExecutionPolicy Bypass -File tools/build_art.ps1
 ```
 
 The script applies our patches to ITA (in [patches/ita/](patches/ita/)), builds it, builds the Python module and copies everything into `bin/`. Add `-SkipIta` to rebuild only the Python module. Only Visual Studio 2019 works, because ITA's CMake preset requires its generator. Every dependency the build downloads is pinned to the commit this was tested with, and the script checks that. See [BUILD.md](BUILD.md#reproducibility).
-
-#### Option C: build from source (macOS and Linux)
-
-> **Not tested yet.** The ITA library is only tested on Windows upstream, so treat the first build as a porting exercise.
-
-```bash
-# macOS:  xcode-select --install && brew install cmake ninja
-# Linux:  sudo apt install build-essential cmake ninja-build patchelf
-
-git submodule update --init --recursive
-python3 -m pip install -r requirements-build.txt
-./tools/build_art.sh
-```
-
-This does the same as Option B. If the import fails afterwards, check where the module looks for its libraries: `otool -L bin/_art_core*.so` (macOS) or `ldd bin/_art_core*.so` (Linux).
 
 ### Check the installation
 

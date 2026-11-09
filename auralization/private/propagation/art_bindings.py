@@ -12,8 +12,8 @@ import numpy as np
 
 # ---------------------------------------------------------------------------
 # Locate and load the compiled _art_core extension module.
-# The shared libraries from the ITAGeometricalAcoustics build must be findable
-# (.dll on Windows, .dylib on macOS, .so on Linux).
+# The DLLs from the ITAGeometricalAcoustics build must be findable.
+# Only tested on Windows.
 #
 # Loading is deferred until the first eigenray call, so that the rest of the
 # toolbox (and the pure-Python helpers in this module, such as
@@ -22,41 +22,28 @@ import numpy as np
 #
 # Search order, first existing directory wins:
 #   1. $ART_DLL_DIR / $ART_PYD_DIR     (explicit override)
-#   2. <project root>/bin              (build_art.ps1/.sh output, or an unpacked archive)
+#   2. <project root>/bin              (build_art.ps1 output, or an unpacked archive)
 #   3. <project root>/prebuilt/<tag>   (binaries committed to the repository, when
 #                                       the platform and Python version match)
 #   4. the in-tree CMake build output  (local developer build)
 #
-# Windows resolves dependent DLLs through os.add_dll_directory at import time.
-# macOS and Linux instead resolve them through an rpath baked into the module
-# when it is linked (@loader_path / $ORIGIN, set in bindings/CMakeLists.txt),
-# so placing _art_core next to the ITA libraries in bin/ is sufficient there;
-# DYLD_LIBRARY_PATH is not used, because macOS SIP strips it.
+# Dependent DLLs are resolved through os.add_dll_directory at import time.
 # ---------------------------------------------------------------------------
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]  # Auralization-toolbox/
 
-if sys.platform == "win32":
-    _ITA_PRESET = "full-win-vs-msvc"
-elif sys.platform == "darwin":
-    _ITA_PRESET = "full-mac-ninja-clang"
-else:
-    _ITA_PRESET = "full-linux-ninja-gcc"
+_ITA_PRESET = "full-win-vs-msvc"
 
 _ITA_BUILD_RELEASE = (
     _PROJECT_ROOT / "ITAGeometricalAcoustics" / "out" / "build" / _ITA_PRESET / "Release"
 )
-# Windows puts the runtime DLLs in Release/bin; the Unix builds put the
-# shared libraries in Release/lib. Search both, on every platform.
+# The runtime DLLs are in Release/bin; Release/lib is searched as well.
 _ITA_BUILD_LIB_DIRS = [_ITA_BUILD_RELEASE / "bin", _ITA_BUILD_RELEASE / "lib"]
 
 
 # Binaries committed to the repository live in prebuilt/<platform>-py<major><minor>,
 # e.g. prebuilt/win-x64-py313. The module is tied to one Python minor version, so
 # the folder is only a candidate for the interpreter it was built for.
-if sys.platform == "win32":
-    _PREBUILT_TAG = f"win-x64-py{sys.version_info.major}{sys.version_info.minor}"
-else:
-    _PREBUILT_TAG = f"{sys.platform}-py{sys.version_info.major}{sys.version_info.minor}"
+_PREBUILT_TAG = f"win-x64-py{sys.version_info.major}{sys.version_info.minor}"
 _PREBUILT_DIR = _PROJECT_ROOT / "prebuilt" / _PREBUILT_TAG
 
 
@@ -74,25 +61,14 @@ def _candidates(env_var: str) -> list[Path]:
 _ART_DLL_DIRS = _candidates("ART_DLL_DIR") + _ITA_BUILD_LIB_DIRS
 _ART_PYD_DIRS = _candidates("ART_PYD_DIR") + [
     _PROJECT_ROOT / "bindings" / "build" / "Release",  # MSVC multi-config
-    _PROJECT_ROOT / "bindings" / "build",              # single-config (Unix)
+    _PROJECT_ROOT / "bindings" / "build",              # single-config generators
 ]
 
-# Platform-specific wording for the error below.
-if sys.platform == "win32":
-    _MODULE_GLOB = "_art_core*.pyd"
-    _LIB_MARKER = "ITAGeo.dll"  # present in the directory that holds the ITA DLLs
-    _LIB_WORD = "DLLs"
-    _BUILD_CMD = "powershell -ExecutionPolicy Bypass -File tools/build_art.ps1"
-    _PREBUILT_NOTE = "The prebuilt binaries are Windows x64 only and are"
-else:
-    _MODULE_GLOB = "_art_core*.so"
-    _LIB_MARKER = ""  # unused: macOS / Linux find libraries through the rpath
-    _LIB_WORD = ".dylib files" if sys.platform == "darwin" else ".so files"
-    _BUILD_CMD = "./tools/build_art.sh"
-    _PREBUILT_NOTE = (
-        "No prebuilt binaries are published for this platform yet, so it has "
-        "to be\nbuilt from source. The result is"
-    )
+_MODULE_GLOB = "_art_core*.pyd"
+_LIB_MARKER = "ITAGeo.dll"  # present in the directory that holds the ITA DLLs
+_LIB_WORD = "DLLs"
+_BUILD_CMD = "powershell -ExecutionPolicy Bypass -File tools/build_art.ps1"
+_PREBUILT_NOTE = "The prebuilt binaries are Windows x64 only and are"
 
 _INSTALL_HINT = """\
 The compiled ART extension module '_art_core' could not be imported, so

@@ -5,11 +5,6 @@
 * text=auto eol=lf
 
 # Exceptions to the LF default above.
-#
-# Shell scripts MUST arrive with LF on every platform: a CRLF shebang makes the
-# kernel fail with "bad interpreter: No such file or directory".
-*.sh            text eol=lf
-*.bash          text eol=lf
 
 # PowerShell is Windows-first; keep it CRLF.
 *.ps1           text eol=crlf
@@ -25,8 +20,6 @@
 *.dat           binary
 *.pyd           binary
 *.dll           binary
-*.dylib         binary
-*.so            binary
 
 # Patches must keep their exact bytes, or they stop applying.
 patches/**      -text

@@ -21,13 +21,7 @@ LOCK = os.path.join(ROOT, "patches", "ita", "dependency-lock.json")
 
 def default_build_dir():
     base = os.path.join(ROOT, "ITAGeometricalAcoustics", "out", "build")
-    if sys.platform == "win32":
-        name = "full-win-vs-msvc"
-    elif sys.platform == "darwin":
-        name = "full-mac-ninja-clang"
-    else:
-        name = "full-linux-ninja-gcc"
-    return os.path.join(base, name)
+    return os.path.join(base, "full-win-vs-msvc")
 
 
 def head(path):
