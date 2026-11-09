@@ -60,20 +60,6 @@ ART has only been tested on Windows.
 `Visual Studio 16 2019` generator, and `tools/build_art.ps1` checks for it
 before doing anything else.
 
-### What was verified
-
-| Check | Result |
-|---|---|
-| Fresh `git clone --recurse-submodules`, new virtual environment, `build_art.ps1` | succeeds, about 25 minutes |
-| Every fetched dependency against the lock | 34 of 34 at the locked commit |
-| Eigenrays from this build against the original development build, 36 cases (4 geometries, 3 atmospheres, no/constant/logarithmic wind) | 72 of 72 rays bit-for-bit identical |
-| `bin/` against the original build | the same 15 files, the same sizes |
-| Running `build_art.ps1` a second time | succeeds in about a minute |
-| `apply_ita_patches.ps1` on a pristine checkout, then again | patches it, then skips |
-| Option A: a copy of the repository with no `bin/` and no build tree, only `prebuilt/win-x64-py313/` | ART becomes available and traces rays (`2 [0, 1]`) |
-
----
-
 ## Option A: prebuilt binaries (Windows, Python 3.13)
 
 > **Python 3.13 only.** The folder contains `_art_core.cp313-win_amd64.pyd`,
