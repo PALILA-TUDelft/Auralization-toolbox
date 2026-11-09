@@ -30,7 +30,7 @@ This page is the complete reference. The README has a short version.
 
 | You have | Use | Effort |
 |---|---|---|
-| Windows x64 and **Python 3.13** | [Option A](#option-a-prebuilt-binaries-windows-python-313) | minutes |
+| Windows x64 and **Python 3.13** | [Option A](#option-a-prebuilt-binaries-windows-python-313) (the binaries are in the repository) | none: `git clone` is enough |
 | Windows x64 and another Python version | [Option B](#option-b-build-from-source-on-windows) | long build, about 25 minutes |
 | macOS or Linux | [Option C](#option-c-build-from-source-on-macos-and-linux) | long build, **not yet verified** |
 | no need for propagation | nothing to install | none |
@@ -70,37 +70,36 @@ before doing anything else.
 | `bin/` against the original build | the same 15 files, the same sizes |
 | Running `build_art.ps1` a second time | succeeds in about a minute |
 | `apply_ita_patches.ps1` and `apply_ita_patches.sh` on a pristine checkout, then again | both patch it, then skip |
-| Option A: the zip unpacked into a clean checkout with no build tree | ART becomes available and traces rays |
+| Option A: a copy of the repository with no `bin/` and no build tree, only `prebuilt/win-x64-py313/` | ART becomes available and traces rays (`2 [0, 1]`) |
 | macOS and Linux (Option C) | **not tested** |
 
 ---
 
 ## Option A: prebuilt binaries (Windows, Python 3.13)
 
-> **Python 3.13 only.** The archive contains `_art_core.cp313-win_amd64.pyd`,
+> **Python 3.13 only.** The folder contains `_art_core.cp313-win_amd64.pyd`,
 > which Python 3.13 on 64-bit Windows can load and no other version can. For any
 > other Python version use [Option B](#option-b-build-from-source-on-windows).
 
-1. Install the **Microsoft Visual C++ Redistributable (x64), version 14.29 or
+The compiled binaries are stored in the repository, in
+[prebuilt/win-x64-py313/](prebuilt/win-x64-py313/) (15 files, about 13 MB). Nothing
+is downloaded and nothing is compiled:
+
+1. `git clone` the repository. The `--recurse-submodules` flag is **not** needed
+   for this option, because ITA itself is only needed to build.
+2. Install the **Microsoft Visual C++ Redistributable (x64), version 14.29 or
    newer**, if it is not already on the machine. The binaries need `vcruntime140.dll`,
    `vcruntime140_1.dll`, `msvcp140.dll` and `vcomp140.dll`, which it provides.
    (Python itself usually installs it.)
-2. Download `art-win-amd64-py313.zip` from the repository's
-   [Releases](../../releases) page.
-3. Unpack it into a `bin/` folder at the repository root:
+3. [Check the installation](#check-the-installation).
 
-   ```text
-   bin/
-   ├── _art_core.cp313-win_amd64.pyd
-   ├── ITAGeo.dll
-   ├── ITAPropagationPathSim.dll
-   ├── ITABase.dll
-   └── ...  (14 DLLs in total)
-   ```
+The toolbox finds `prebuilt/win-x64-py313/` automatically, as long as the Python
+that runs it is 3.13 on 64-bit Windows. Where the files came from, their SHA-256
+sums and their licenses are in [prebuilt/README.md](prebuilt/README.md) and
+[prebuilt/THIRD_PARTY_LICENSES.txt](prebuilt/THIRD_PARTY_LICENSES.txt).
 
-4. [Check the installation](#check-the-installation).
-
-The toolbox looks in `bin/` automatically.
+A build you make yourself goes into `bin/`, which is searched first, so it
+overrides the committed files without touching them.
 
 ## Option B: build from source on Windows
 
@@ -260,8 +259,10 @@ The toolbox looks for the binaries in this order, and uses the first that works:
 
 1. the directories in the environment variables `ART_DLL_DIR` (the ITA libraries)
    and `ART_PYD_DIR` (`_art_core`);
-2. `bin/` in the repository root;
-3. the in-tree build output (`ITAGeometricalAcoustics/out/build/<preset>/Release`
+2. `bin/` in the repository root (what `build_art.ps1` / `build_art.sh` write);
+3. `prebuilt/<platform>-py<version>/`, the binaries committed to the repository
+   (`prebuilt/win-x64-py313/` on Windows x64 with Python 3.13);
+4. the in-tree build output (`ITAGeometricalAcoustics/out/build/<preset>/Release`
    and `bindings/build`).
 
 ---
@@ -394,22 +395,96 @@ reference: `files/ITAGeo/external_libs/fix-netcdf-cxx4.cmake` and
 
 ---
 
+## Troubleshooting
+
+Each entry is a problem that was met while developing this build, and its fix.
+
+**`ART module not found` / `_art_core could not be imported`.** The message lists
+every directory that was searched. The usual causes:
+
+- *Wrong Python.* `_art_core.cp313-win_amd64.pyd` loads on Python 3.13 only. Check
+  `python --version`; for another version, build with [Option B](#option-b-build-from-source-on-windows)
+  using that interpreter.
+- *`DLL load failed`.* Install the Microsoft Visual C++ Redistributable (x64),
+  14.29 or newer (Option A, step 2).
+- *Not 64-bit.* The binaries are x64 only.
+- *A stale or mixed build.* Delete `bin/` and run the build again, or set
+  `ART_DLL_DIR` and `ART_PYD_DIR` explicitly to one directory that has all the
+  files. The toolbox uses one directory for the module and one for the DLLs, the
+  first that contains them, in the order given under [Check the installation](#check-the-installation).
+
+**`build_art.ps1` says Visual Studio 2019 was not found.** Install *Build Tools for
+Visual Studio 2019* with the workload **Desktop development with C++**. Newer
+Visual Studio versions are not a substitute: ITA's preset asks for the
+`Visual Studio 16 2019` generator by name.
+
+**`Reversed (or previously applied) patch detected`** while configuring ITA.
+An earlier configure was interrupted (network error, Ctrl+C), which leaves a
+half-finished tree that cannot be patched a second time. Run
+`tools\build_art.ps1 -CleanIta` (`./tools/build_art.sh --clean-ita`) to configure
+ITA from scratch. A tree that configured completely is re-used safely: the script
+re-configures it in local-only mode, so nothing is fetched or patched again.
+
+**`netcdf.h` not found.** This happens when everything in ITA is built, including
+its apps and `netcdf-cxx4`, which ART does not use and which does not compile in
+this configuration. `build_art.ps1` builds only the two libraries ART needs
+(`ITAGeo`, `ITAPropagationPathSim`). If you build by hand, use
+`cmake --build <dir> --config Release --target ITAGeo ITAPropagationPathSim`.
+
+**A download fails during configure.** The build fetches from the hosts listed in
+[Prerequisites](#1-prerequisites). Two of them, `gitlab.vci.rwth-aachen.de` and
+`www.graphics.rwth-aachen.de` (OpenMesh), are on **port 9000**, which firewalls
+and proxies commonly block, and the OpenMesh one answers with a redirect. If
+that is where it stops, allow outbound HTTPS on port 9000, or build on another
+network. Run the script again afterwards; use `-CleanIta` if the message
+mentions "previously applied".
+
+**`N drifted` in the dependency lock check.** A dependency was fetched at a
+different commit than `patches/ita/dependency-lock.json` records. The build
+stops there on purpose. See [Reproducibility](#reproducibility), in particular
+"Updating the lock", before deciding whether the new version is acceptable.
+
+**CMake picks the wrong Python.** Activate the virtual environment first: the
+script passes the `python` that is first on `PATH` to CMake. Check with
+`python -c "import sys; print(sys.executable)"`.
+
+**A newer CMake.** 3.27.9 was used. 3.24 or newer is required (the lock is loaded
+through `CMAKE_PROJECT_TOP_LEVEL_INCLUDES`). Versions newer than 3.27 have not
+been tried; if one fails in a way that is not obviously about your setup, install
+3.27.9.
+
+**Paths too long on Windows.** The dependencies are unpacked into deep directories.
+Enable long paths: `git config --system core.longpaths true` (administrator
+prompt), and clone into a short folder such as `C:\dev\`.
+
+**Disk space.** About 5 GB: the ITA build directory alone is 3.6 GB.
+
+If something here does not match what you see, open an issue with the full output
+of `tools\build_art.ps1` (or `.sh`).
+
+---
+
 ## For maintainers
 
-### Publishing the prebuilt archive (Option A)
+### Updating the committed binaries (Option A)
 
 After a successful `build_art.ps1` run on **Python 3.13**:
 
 ```powershell
-Compress-Archive -Path bin\* -DestinationPath art-win-amd64-py313.zip
+Copy-Item bin\* prebuilt\win-x64-py313\ -Force
+Get-FileHash prebuilt\win-x64-py313\* -Algorithm SHA256   # refresh the table in prebuilt/README.md
 ```
 
-Attach it to a GitHub Release. Include, in the archive or the release notes, the
-Apache-2.0 text from `ITAGeometricalAcoustics/LICENSE.md` and the licenses of the
-bundled third-party libraries (Vista, assimp, OpenMeshCore, libsamplerate,
-easy_profiler, DAFF); their sources are listed in
-[Locked dependencies](#locked-dependencies). Then test it: unpack it into a clean
-checkout that has no build tree and run [the check](#check-the-installation).
+Update the table in [prebuilt/README.md](prebuilt/README.md) (sizes and SHA-256
+sums) and, if a dependency changed, the matching text in
+`prebuilt/THIRD_PARTY_LICENSES.txt`. Git keeps every version of every binary for
+good, so each update adds about 13 MB to the size of the repository: update the
+folder when ART really changed, not on every commit. Then run the
+"Option A check" workflow (Actions tab) to test the committed files on a clean
+machine.
+
+A zip of the same 15 files can still be attached to a GitHub Release for people
+who do not clone the repository.
 
 ### Regenerating a patch
 

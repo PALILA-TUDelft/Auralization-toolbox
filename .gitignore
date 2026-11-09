@@ -8,9 +8,9 @@ env/
 
 # --- Native build trees (ART / ITAGeometricalAcoustics bindings) ---
 # The compiled _art_core extension and the ITA DLLs are build products.
-# They are tied to one Python version and one compiler, so they are not
-# tracked here: build them with tools/build_art.ps1, or download the
-# prebuilt archive from the GitHub Release (see README).
+# They are tied to one Python version and one compiler, so a local build
+# (tools/build_art.ps1 writes bin/) is not tracked. The one set that IS tracked
+# is the Windows / Python 3.13 binaries in prebuilt/win-x64-py313/.
 bindings/build/
 ITAGeometricalAcoustics/out/
 bin/

@@ -22,8 +22,10 @@ import numpy as np
 #
 # Search order, first existing directory wins:
 #   1. $ART_DLL_DIR / $ART_PYD_DIR     (explicit override)
-#   2. <project root>/bin              (prebuilt archive, or build_art.ps1/.sh)
-#   3. the in-tree CMake build output  (local developer build)
+#   2. <project root>/bin              (build_art.ps1/.sh output, or an unpacked archive)
+#   3. <project root>/prebuilt/<tag>   (binaries committed to the repository, when
+#                                       the platform and Python version match)
+#   4. the in-tree CMake build output  (local developer build)
 #
 # Windows resolves dependent DLLs through os.add_dll_directory at import time.
 # macOS and Linux instead resolve them through an rpath baked into the module
@@ -48,6 +50,16 @@ _ITA_BUILD_RELEASE = (
 _ITA_BUILD_LIB_DIRS = [_ITA_BUILD_RELEASE / "bin", _ITA_BUILD_RELEASE / "lib"]
 
 
+# Binaries committed to the repository live in prebuilt/<platform>-py<major><minor>,
+# e.g. prebuilt/win-x64-py313. The module is tied to one Python minor version, so
+# the folder is only a candidate for the interpreter it was built for.
+if sys.platform == "win32":
+    _PREBUILT_TAG = f"win-x64-py{sys.version_info.major}{sys.version_info.minor}"
+else:
+    _PREBUILT_TAG = f"{sys.platform}-py{sys.version_info.major}{sys.version_info.minor}"
+_PREBUILT_DIR = _PROJECT_ROOT / "prebuilt" / _PREBUILT_TAG
+
+
 def _candidates(env_var: str) -> list[Path]:
     """Directories to search for the ART binaries, highest priority first."""
     dirs = []
@@ -55,6 +67,7 @@ def _candidates(env_var: str) -> list[Path]:
     if override:
         dirs.extend(Path(p).expanduser() for p in override.split(os.pathsep) if p)
     dirs.append(_PROJECT_ROOT / "bin")
+    dirs.append(_PREBUILT_DIR)
     return dirs
 
 
@@ -87,9 +100,11 @@ eigenray tracing is unavailable. The rest of the toolbox does not need it.
 
 To enable it, either:
   * build it from source:  {build_cmd}
-  * unpack a prebuilt archive into
-      {bin_dir}
-    (it must contain {module_glob} and the ITA {lib_word}), or
+  * use the binaries committed to the repository (Windows x64 + Python 3.13 only):
+      {prebuilt_dir}
+    (a git clone has them; check that the folder exists and is complete), or
+  * put {module_glob} and the ITA {lib_word} into
+      {bin_dir}, or
   * point ART_DLL_DIR / ART_PYD_DIR at the directories holding the ITA
     {lib_word} and {module_glob} respectively.
 
@@ -137,6 +152,7 @@ def _load_art_core():
         raise ImportError(
             _INSTALL_HINT.format(
                 bin_dir=_PROJECT_ROOT / "bin",
+                prebuilt_dir=_PREBUILT_DIR,
                 py=f"{sys.version_info.major}.{sys.version_info.minor}",
                 platform=sys.platform,
                 build_cmd=_BUILD_CMD,

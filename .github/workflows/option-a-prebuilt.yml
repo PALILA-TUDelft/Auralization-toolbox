@@ -1,17 +1,16 @@
-# Tests BUILD.md Option A: a user with Python 3.13 on Windows downloads the
-# prebuilt binaries, unpacks them into bin/ and runs a ray trace. The job clones
-# WITHOUT submodules and never builds anything, so it only passes if the zip is
-# complete.
+# Tests BUILD.md Option A: a user with Python 3.13 on Windows clones the
+# repository and runs a ray trace with the binaries committed in
+# prebuilt/win-x64-py313/. The job clones WITHOUT submodules and never builds
+# anything, so it only passes if the committed files are complete and are the
+# ones the toolbox loads.
 #
-# Where the binaries come from (pick one when you start the run):
-#   - nothing filled in : the latest GitHub Release, asset art-win-amd64-py313.zip
-#   - zip_url           : any direct download link to that zip
-#   - build_run_id      : the artifact of an earlier "Fresh-clone build (Windows)"
-#                         run (the number at the end of that run's URL). Use this
-#                         before a Release exists.
+# Optional override (leave both empty for the normal test):
+#   zip_url      : test a zip from this URL instead, unpacked into bin/
+#   build_run_id : test the artifact of an earlier "Fresh-clone build (Windows)"
+#                  run instead, copied into bin/ (the number at the end of the run URL)
 #
 # Limit: GitHub's Windows runner already has the Visual C++ runtime installed,
-# so this cannot show whether a machine WITHOUT it fails (BUILD.md step 1 of
+# so this cannot show whether a machine WITHOUT it fails (BUILD.md step 2 of
 # Option A covers that case).
 name: Option A check (prebuilt binaries, Windows)
 
@@ -19,11 +18,11 @@ on:
   workflow_dispatch:
     inputs:
       zip_url:
-        description: 'Direct URL of art-win-amd64-py313.zip (empty = latest GitHub Release)'
+        description: 'Optional: direct URL of a zip of the binaries (empty = test the files in the repository)'
         required: false
         default: ''
       build_run_id:
-        description: 'Or: run ID of a "Fresh-clone build (Windows)" run whose artifact to test'
+        description: 'Optional: run ID of a "Fresh-clone build (Windows)" run whose artifact to test'
         required: false
         default: ''
 
@@ -51,16 +50,16 @@ jobs:
           $ErrorActionPreference = 'Continue'   # pip warnings go to stderr; judge by exit code only
           python -m pip install -r requirements.txt
 
-      - name: Get the prebuilt binaries into bin/
+      - name: Optional override into bin/
+        if: inputs.zip_url != '' || inputs.build_run_id != ''
         shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
           ZIP_URL: ${{ inputs.zip_url }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
         run: |
-          # The runner's default is 'Stop', under which Windows PowerShell 5.1 aborts on ANY
-          # text a native program (gh) writes to stderr, with an empty error message. Use
-          # 'Continue', print gh's output ourselves and check exit codes explicitly.
+          # Windows PowerShell 5.1 under the runner's default 'Stop' aborts on any text a
+          # native program writes to stderr; use 'Continue' and check exit codes ourselves.
           $ErrorActionPreference = 'Continue'
           function Fail($msg) { Write-Host "::error::$msg"; exit 1 }
           function Gh { & gh @args 2>&1 | ForEach-Object { "$_" } | Write-Host }
@@ -71,39 +70,40 @@ jobs:
             Gh run download $env:BUILD_RUN_ID --repo $env:GITHUB_REPOSITORY --name art-win-amd64-py313 --dir bin
             if ($LASTEXITCODE -ne 0) { Fail 'artifact download failed (expired after 14 days, or wrong run ID?)' }
           } else {
-            $zip = Join-Path $env:RUNNER_TEMP 'art-win-amd64-py313.zip'
-            if ($env:ZIP_URL) {
-              Write-Host "Downloading $env:ZIP_URL"
-              Invoke-WebRequest -Uri $env:ZIP_URL -OutFile $zip
-            } else {
-              Write-Host 'No zip_url or build_run_id given: using the latest GitHub Release'
-              Gh release download --repo $env:GITHUB_REPOSITORY --pattern art-win-amd64-py313.zip --dir $env:RUNNER_TEMP --clobber
-              if ($LASTEXITCODE -ne 0) { Fail 'No Release with an art-win-amd64-py313.zip asset exists yet. Run the workflow again and fill in build_run_id (or zip_url).' }
-            }
+            $zip = Join-Path $env:RUNNER_TEMP 'art.zip'
+            Write-Host "Downloading $env:ZIP_URL"
+            Invoke-WebRequest -Uri $env:ZIP_URL -OutFile $zip
             Expand-Archive -Path $zip -DestinationPath bin -Force
           }
 
-      - name: Contents of bin/
+      - name: Check the files
         shell: powershell
         run: |
-          $files = Get-ChildItem bin -File
+          $dir = if (Test-Path bin) { 'bin' } else { 'prebuilt\win-x64-py313' }
+          Write-Host "Binaries under test: $dir"
+          $files = Get-ChildItem $dir -File
           $files | Select-Object Name, Length | Format-Table -AutoSize
           Write-Host "$($files.Count) files"
           foreach ($need in '_art_core.cp313-win_amd64.pyd', 'ITAGeo.dll', 'ITAPropagationPathSim.dll') {
-            if (-not (Test-Path (Join-Path bin $need))) { throw "missing from the archive: $need" }
+            if (-not (Test-Path (Join-Path $dir $need))) { throw "missing: $need" }
           }
-          # the files must sit directly in bin/, not in a sub-folder
-          if (Get-ChildItem bin -Directory) { throw 'bin/ contains a sub-folder: the zip should unpack flat' }
+          if (Get-ChildItem $dir -Directory) { throw "$dir contains a sub-folder: the files should sit directly in it" }
           # Option A users have no build tree; make sure nothing else could satisfy the loader
           if (Test-Path ITAGeometricalAcoustics\out) { throw 'an ITA build tree exists; the test would not be clean' }
+          if (-not (Test-Path prebuilt\THIRD_PARTY_LICENSES.txt)) { throw 'prebuilt\THIRD_PARTY_LICENSES.txt is missing' }
 
-      - name: Ray-trace check (expects 2 rays, [0, 1])
+      - name: Ray-trace check (expects 2 rays, [0, 1], module loaded from the folder under test)
         shell: powershell
         run: |
           $ErrorActionPreference = 'Continue'   # Python warnings go to stderr; judge by exit code only
           @'
+          import os
           from auralization.private.propagation.art_bindings import art_core_available, create_atmosphere_json, find_eigenrays
           assert art_core_available(), "ART module not found"
+          import _art_core
+          print("module loaded from:", _art_core.__file__)
+          expected = "bin" if os.path.isdir("bin") else "prebuilt"
+          assert expected in _art_core.__file__, f"expected the module from {expected}/"
           rays = find_eigenrays(create_atmosphere_json(), [0, 0, 300], [500, 0, 2], {"maxReflectionOrder": 1})
           out = (len(rays), [r.numReflections for r in rays])
           print(out)
