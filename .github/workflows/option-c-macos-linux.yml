@@ -73,8 +73,21 @@ jobs:
 
       - name: Build ART (tools/build_art.sh)
         run: |
+          set -o pipefail
           python3 --version
-          bash tools/build_art.sh   # "bash" so the check does not depend on the file's executable bit
+          # "bash" so the check does not depend on the file's executable bit; the output is
+          # also kept in build.log so the failure step below can summarise it
+          bash tools/build_art.sh 2>&1 | tee build.log
+
+      - name: Summarise the build errors
+        if: failure()
+        run: |
+          # Annotations show up on the run's summary page (and in the API) without opening
+          # the multi-thousand-line log. '%' must be escaped as %25, newlines as %0A.
+          [ -f build.log ] || exit 0
+          grep -n -E 'CMake Error|[Ee]rror:|FAILED:|fatal error|undefined reference|ninja: build stopped' build.log             | head -8 | sed 's/%/%25/g' | while IFS= read -r line; do echo "::error::${line}"; done
+          msg="$(tail -n 40 build.log | awk '{ gsub(/%/, "%25"); printf "%s%%0A", $0 }')"
+          echo "::error title=Last 40 lines of the build log::${msg}"
 
       - name: Ray-trace check (expects 2 rays, [0, 1])
         run: |
@@ -107,6 +120,7 @@ jobs:
         with:
           name: cmake-logs-${{ matrix.artifact }}
           path: |
+            build.log
             ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeConfigureLog.yaml
             ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeError.log
             ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeOutput.log

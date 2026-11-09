@@ -22,10 +22,12 @@ if [ ! -f "$ITA_ROOT/CMakePresets.json" ]; then
     exit 1
 fi
 
-# submodule-relative-path:patch-file
+# submodule-relative-path:patch-file. The order matters: a patch may build on an
+# earlier one for the same submodule (ITAGeo-unix.patch).
 TARGETS=(
     ".:ITAGeometricalAcoustics.patch"
     "ITAGeo:ITAGeo.patch"
+    "ITAGeo:ITAGeo-unix.patch"
     "ITAPropagationModels:ITAPropagationModels.patch"
 )
 
@@ -40,6 +42,7 @@ for entry in "${TARGETS[@]}"; do
     else
         dir="$ITA_ROOT/$sub"; label="$sub"
     fi
+    label="$label [$patch_name]"
 
     [ -f "$patch" ] || { echo "Missing patch file: $patch" >&2; exit 1; }
     if [ ! -d "$dir" ]; then

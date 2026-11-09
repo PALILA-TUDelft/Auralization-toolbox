@@ -53,19 +53,24 @@ if (-not (Test-Path (Join-Path $ItaRoot 'CMakePresets.json'))) {
     throw "ITAGeometricalAcoustics is not checked out. Run: git submodule update --init --recursive"
 }
 
-# Submodule directory (relative to $ItaRoot) -> patch file name
-$Targets = [ordered]@{
-    '.'                    = 'ITAGeometricalAcoustics.patch'
-    'ITAGeo'               = 'ITAGeo.patch'
-    'ITAPropagationModels' = 'ITAPropagationModels.patch'
-}
+# Submodule directory (relative to $ItaRoot), patch file name. The order matters: a
+# patch may build on an earlier one for the same submodule (ITAGeo-unix.patch).
+$Targets = @(
+    @('.',                    'ITAGeometricalAcoustics.patch'),
+    @('ITAGeo',               'ITAGeo.patch'),
+    @('ITAGeo',               'ITAGeo-unix.patch'),
+    @('ITAPropagationModels', 'ITAPropagationModels.patch')
+)
 
 $failed = @()
 
-foreach ($sub in $Targets.Keys) {
-    $patch = Join-Path $PatchDir $Targets[$sub]
+foreach ($target in $Targets) {
+    $sub = $target[0]
+    $patchName = $target[1]
+    $patch = Join-Path $PatchDir $patchName
     $dir = if ($sub -eq '.') { $ItaRoot } else { Join-Path $ItaRoot $sub }
     $label = if ($sub -eq '.') { 'ITAGeometricalAcoustics' } else { $sub }
+    $label = "$label [$patchName]"
 
     if (-not (Test-Path $patch)) { throw "Missing patch file: $patch" }
     if (-not (Test-Path $dir)) {

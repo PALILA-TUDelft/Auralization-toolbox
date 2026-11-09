@@ -1,0 +1,40 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc7e701..bb1811a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,10 +28,15 @@ endif ()
+ # ---External libs---
+ add_subdirectory (external_libs)
+ 
+-file (DOWNLOAD https://raw.githubusercontent.com/SketchUp/sketchup-live-c-api/main/cmake/FindSketchUpAPI.cmake
+-	  ${CMAKE_BINARY_DIR}/cmake/FindSketchUpAPI.cmake
+-)
+-list (INSERT CMAKE_MODULE_PATH 0 ${CMAKE_BINARY_DIR}/cmake)
++# SketchUp is only used on Windows. Its Find module stops with an error on any other
++# system, so it is only fetched there; elsewhere find_package (SketchUpAPI) below
++# simply finds nothing.
++if (WIN32)
++	file (DOWNLOAD https://raw.githubusercontent.com/SketchUp/sketchup-live-c-api/main/cmake/FindSketchUpAPI.cmake
++		  ${CMAKE_BINARY_DIR}/cmake/FindSketchUpAPI.cmake
++	)
++	list (INSERT CMAKE_MODULE_PATH 0 ${CMAKE_BINARY_DIR}/cmake)
++endif ()
+ 
+ if (DEFINED ENV{SketchUpAPI_DIR})
+ 	set (SketchUpAPI_DIR $ENV{SketchUpAPI_DIR})
+diff --git a/external_libs/CMakeLists.txt b/external_libs/CMakeLists.txt
+index 1fb8bd2..57a1283 100644
+--- a/external_libs/CMakeLists.txt
++++ b/external_libs/CMakeLists.txt
+@@ -106,7 +106,10 @@ CPMAddPackage (
+ 
+ set_property (TARGET assimp PROPERTY FOLDER "external_libs")
+ set_property (TARGET unit PROPERTY FOLDER "external_libs")
+-set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTY FOLDER "external_libs")
++# only assimp's MSVC build defines this target
++if (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs)
++	set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTY FOLDER "external_libs")
++endif ()
+ 
+ if (ITA_GEO_WITH_CITYGML_SUPPORT OR ITA_GEO_WITH_XERCES_SUPPORT)
+ 	set (CPM_DONT_UPDATE_MODULE_PATH ON)

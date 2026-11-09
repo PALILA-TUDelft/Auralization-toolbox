@@ -394,6 +394,8 @@ out with LF or CRLF line endings.
 | `ITAGeo.patch` | `if (WIN32)` becomes `if (WIN32 AND SketchUpAPI_FOUND)` | The SketchUp library is optional. Without this guard the build sets a property on a target that does not exist and CMake stops. |
 | | adds `netcdf-cxx4` v4.3.1 with `netcdf-cxx4.patch` | netcdf-cxx4 is needed by ITA; the patch below is applied to it. |
 | | pins `ITACoreLibs` | Reproducibility. |
+| `ITAGeo-unix.patch` | downloads and uses `FindSketchUpAPI.cmake` only `if (WIN32)` | Its Find module stops with `SketchUpAPI is only available on Win/Mac` on Linux, and SketchUp is not used outside Windows. |
+| | guards `set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs ...)` with `if (TARGET ...)` | assimp defines that target only in its MSVC build; elsewhere CMake stops with `set_property could not find TARGET`. No effect on Windows. |
 | `ITAPropagationModels.patch` | removes the `netcdf-cxx4` link and target setup from `pelican` and `external_libs` | The dependency is now defined once, in ITAGeo. |
 | `files/.../netcdf-cxx4.patch` | removes `INCLUDE_DIRECTORIES(".")` and wraps the include directory in `$<BUILD_INTERFACE:>` / `$<INSTALL_INTERFACE:include>` | The upstream target publishes an absolute source-tree include path, which CMake does not allow in an installable target. |
 
