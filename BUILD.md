@@ -406,7 +406,14 @@ out with LF or CRLF line endings.
 | | guards `set_property (TARGET UpdateAssimpLibsDebugSymbolsAndDLLs ...)` with `if (TARGET ...)` | assimp defines that target only in its MSVC build; elsewhere CMake stops with `set_property could not find TARGET`. No effect on Windows. |
 | `ITAPropagationModels.patch` | removes the `netcdf-cxx4` link and target setup from `pelican` and `external_libs` | The dependency is now defined once, in ITAGeo. |
 | `files/ITAGeometricalAcoustics/integration/pkg-config/tbb.pc.in` | copied into the ITA root (a copy of the file from oneTBB v2021.3.0) | Outside Windows, oneTBB reads `${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in`, which only exists when oneTBB is the top-level project. Without the copy CMake stops with `File ... tbb.pc.in does not exist`. |
+| `itacorelibs-unix.patch` (applied by `dependency-lock.cmake`, **not on Windows**) | `ITABase/src/CMakeLists.txt`: `add_subdirectory (simpleini)` only `if (WIN32)` | Outside Windows `simpleini` is already added earlier in the same file, and adding it twice is a CMake error (`The binary directory ... is already used to build a source directory`). |
+| `ihtautilitylibs-unix.patch` (same, **not on Windows**) | quotes `${CMAKE_RUNTIME_OUTPUT_DIRECTORY}` and the two similar variables in `IHTAInstrumentation/external_libs/CMakeLists.txt` | They are empty outside Windows, which leaves `set_target_properties` with an odd number of arguments (`called with incorrect number of arguments`). |
 | `files/.../netcdf-cxx4.patch` | removes `INCLUDE_DIRECTORIES(".")` and wraps the include directory in `$<BUILD_INTERFACE:>` / `$<INSTALL_INTERFACE:include>` | The upstream target publishes an absolute source-tree include path, which CMake does not allow in an installable target. |
+
+The two `*-unix.patch` files change dependencies that CMake downloads (ITACoreLibs
+and IHTAUtilityLibs), not the ITA submodule. They are attached to the downloads in
+`patches/ita/dependency-lock.cmake` and only on macOS and Linux, so the Windows build
+is exactly the one that was verified.
 
 `netcdf-cxx4` is configured but **never compiled** for ART: the build only
 builds `ITAGeo` and `ITAPropagationPathSim`. The `netcdf-cxx4` changes therefore

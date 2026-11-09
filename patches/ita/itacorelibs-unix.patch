@@ -1,0 +1,16 @@
+diff --git a/ITABase/src/CMakeLists.txt b/ITABase/src/CMakeLists.txt
+index e6731b1..ad9c010 100644
+--- a/ITABase/src/CMakeLists.txt
++++ b/ITABase/src/CMakeLists.txt
+@@ -87,7 +87,10 @@ endif ()
+ if (ITA_BASE_WITH_CONFIG_OLD_IMPL AND NOT ITA_BASE_WITH_CONFIG_SIMPLE_INI)
+ 	target_sources (${LIB_TARGET} PRIVATE ITAConfigUtils.cpp ITAConfigUtilsWin32Impl.cpp)
+ else ()
+-	add_subdirectory (simpleini)
++	# outside Windows simpleini has already been added above; adding it twice is a CMake error
++	if (WIN32)
++		add_subdirectory (simpleini)
++	endif ()
+ 	target_sources (${LIB_TARGET} PRIVATE ITAConfigUtilsSimpleIniImpl.cpp)
+ 	target_compile_definitions (${LIB_TARGET} PRIVATE USE_SIMPLEINI)
+ endif ()

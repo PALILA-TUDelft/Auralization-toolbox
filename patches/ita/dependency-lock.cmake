@@ -60,13 +60,40 @@ else ()
 	set (_ita_lock_deps_dir "${CMAKE_BINARY_DIR}/_deps")
 endif ()
 
+# Fixes that are only needed, and only applied, outside Windows (the Windows build is
+# kept exactly as it was verified). Both are patches to dependencies that CPM fetches;
+# see BUILD.md, "Local changes to ITA".
+#   ihtautilitylibs-unix.patch  IHTAInstrumentation: unquoted empty variables make a
+#                               set_target_properties call have an odd argument count
+#   itacorelibs-unix.patch      ITABase: add_subdirectory (simpleini) runs twice
+set (_ita_lock_ihta_patches)
+if (NOT WIN32)
+	set (_ita_lock_ihta_patches PATCHES "${CMAKE_CURRENT_LIST_DIR}/ihtautilitylibs-unix.patch")
+endif ()
+
 CPMDeclarePackage (
 	IHTAUtilityLibs
 	NAME IHTAUtilityLibs
 	GIT_REPOSITORY https://git.rwth-aachen.de/ita/ihtautilitylibs
 	GIT_TAG 773df1451ac5bd10349f833eec6413dc7f402eef
 	GIT_SHALLOW FALSE
+	${_ita_lock_ihta_patches}
 )
+
+# ITACoreLibs is requested by ITAGeo/external_libs/CMakeLists.txt (pinned there by
+# ITAGeo.patch). Outside Windows it is declared here instead, so that it can carry
+# the patch. The options are the ones ITAGeo passes (ITA_GEO_WITH_JSON_SUPPORT is ON).
+if (NOT WIN32)
+	CPMDeclarePackage (
+		ITACoreLibs
+		NAME ITACoreLibs
+		GIT_REPOSITORY https://git.rwth-aachen.de/ita/ITACoreLibs
+		GIT_TAG b82d1daaf206a70838520f2f96adf24524bc4012
+		GIT_SHALLOW FALSE
+		OPTIONS "ITA_BASE_WITH_JSON_SUPPORT ON"
+		PATCHES "${CMAKE_CURRENT_LIST_DIR}/itacorelibs-unix.patch"
+	)
+endif ()
 
 CPMDeclarePackage (
 	vista
