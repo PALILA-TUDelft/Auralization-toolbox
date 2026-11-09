@@ -198,7 +198,7 @@ and others not. Run the script again with `-CleanIta` (`--clean-ita` for
 > you find.
 
 ```bash
-# macOS:   xcode-select --install && brew install cmake ninja
+# macOS:   xcode-select --install && brew install cmake ninja gpatch
 # Debian:  sudo apt install build-essential cmake ninja-build patchelf
 
 git clone --recurse-submodules https://github.com/<owner>/Auralization-toolbox
@@ -215,6 +215,12 @@ bash 3.2 that macOS ships.
 
 Differences from Windows that the build accounts for:
 
+- **GNU patch.** CMake applies the dependency patches with the first `patch` on
+  the machine. On macOS that is Apple's BSD patch, which rejects this
+  repository's patches with `2 out of 2 hunks failed` (the patch files have CRLF
+  line endings, the sources they change have LF). `build_art.sh` therefore needs
+  GNU patch (`brew install gpatch`) and passes it to CMake as `PATCH_EXECUTABLE`.
+  Linux and Git for Windows already ship GNU patch.
 - **Tracking library.** ITA's IHTAUtilityLibs also builds a motion-tracking
   library that needs the OptiTrack NatNet SDK, which exists for Windows only.
   `build_art.sh` configures with `-DWITH_IHTA_TRACKING=OFF`; ART does not use it

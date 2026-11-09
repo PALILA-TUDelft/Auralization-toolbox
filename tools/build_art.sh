@@ -4,7 +4,7 @@
 # the ITA shared libraries, into bin/ where the toolbox looks for it.
 #
 # POSIX counterpart of build_art.ps1. Steps:
-#   1. check for git / cmake / ninja / python3 / nanobind
+#   1. check for git / cmake / ninja / python3 / nanobind (and gpatch on macOS)
 #   2. git submodule update --init --recursive
 #   3. apply the local ITA patches
 #   4. configure ITAGeometricalAcoustics, verify the dependency lock, build (Release)
@@ -95,6 +95,22 @@ if [ "$PLATFORM" = "macOS" ] && ! xcode-select -p >/dev/null 2>&1; then
     exit 1
 fi
 
+# Extra arguments for configuring ITA (an array: bash 3.2 on macOS has no mapfile).
+ITA_EXTRA_ARGS=()
+if [ "$PLATFORM" = "macOS" ]; then
+    # CMake applies the dependency patches with the first `patch` it finds. On macOS
+    # that is Apple's BSD patch, which refuses the patches in this repository (they
+    # have CRLF line endings, the sources they change have LF) with "2 out of 2 hunks
+    # failed". GNU patch, which Linux and Git for Windows ship, accepts them.
+    GPATCH="$(command -v gpatch || true)"
+    if [ -z "$GPATCH" ]; then
+        echo "GNU patch ('gpatch') not found. Run: brew install gpatch" >&2
+        exit 1
+    fi
+    echo "  gpatch : $GPATCH"
+    ITA_EXTRA_ARGS+=("-DPATCH_EXECUTABLE=$GPATCH")
+fi
+
 if [ "$SKIP_ITA" -eq 0 ]; then
     # --- 2. Submodules ----------------------------------------------------
     step "Updating submodules"
@@ -130,7 +146,7 @@ if [ "$SKIP_ITA" -eq 0 ]; then
     # this switch CMake stops with 'Could not find ... "NatNetSDK"'. ART does not
     # use the tracking library (its DLL is not among the files in bin/).
     step "Configuring ITAGeometricalAcoustics (preset $PRESET)"
-    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY -DWITH_IHTA_TRACKING=OFF ); then
+    if ! ( cd "$ITA_ROOT" && cmake --preset "$PRESET" $LOCAL_ONLY -DWITH_IHTA_TRACKING=OFF ${ITA_EXTRA_ARGS[@]+"${ITA_EXTRA_ARGS[@]}"} ); then
         echo >&2
         echo "ITA configuration failed." >&2
         echo "If an EARLIER configure was interrupted (network error, Ctrl+C) and the message above" >&2

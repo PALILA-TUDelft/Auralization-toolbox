@@ -52,7 +52,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           xcode-select -p
-          brew install ninja
+          brew install ninja gpatch   # gpatch: GNU patch, see tools/build_art.sh
 
       - name: Versions in use
         run: |
