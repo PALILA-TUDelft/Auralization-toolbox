@@ -1,0 +1,172 @@
+{
+  "assimp": {
+    "commit": "9519a62dd20799c5493c638d1ef5a6f484e5faf1",
+    "tag": "v5.2.5",
+    "url": "https://github.com/assimp/assimp"
+  },
+  "cli11": {
+    "commit": "70f8072f9dd2292fd0b9f9e5f58e279f60483ed3",
+    "tag": "v2.1.2",
+    "url": "https://github.com/CLIUtils/CLI11"
+  },
+  "date": {
+    "commit": "6e921e1b1d21e84a5c82416ba7ecd98e33a436d0",
+    "tag": "v3.0.1",
+    "url": "https://github.com/HowardHinnant/date"
+  },
+  "dspfilters": {
+    "commit": "acc49170e79a94fcb9c04b8a2116e9f8dffd1c7d",
+    "tag": null,
+    "url": "https://github.com/vinniefalco/DSPFilters.git"
+  },
+  "dtracksdk": {
+    "commit": "8250c335697953c10350d84a4dba28315246f3e8",
+    "tag": "v2.7.0",
+    "url": "https://github.com/ar-tracking/DTrackSDK.git"
+  },
+  "easy_profiler": {
+    "commit": "046d9bd40cfd55ca3b1d798b16ad2a5673f66806",
+    "tag": "v2.1.0",
+    "url": "https://github.com/yse/easy_profiler.git"
+  },
+  "eigen": {
+    "commit": "3147391d946bb4b6c68edd901f2add6ac1f31f8c",
+    "tag": "3.4.0",
+    "url": "https://gitlab.com/libeigen/eigen"
+  },
+  "format.cmake": {
+    "commit": "282c3cb6be89ce7f2bf463511fc49264898ee05b",
+    "tag": "v1.7.2",
+    "url": "https://github.com/TheLartians/Format.cmake.git"
+  },
+  "glm": {
+    "commit": "0af55ccecd98d4e5a8d1fad7de25ba429d60e863",
+    "tag": "1.0.1",
+    "url": "https://github.com/g-truc/glm.git"
+  },
+  "grpsrcbydir": {
+    "commit": "784628b837d0234376fe1a0142f40728317b54c9",
+    "tag": "v1.0",
+    "url": "https://github.com/TheLartians/GroupSourcesByFolder.cmake.git"
+  },
+  "hdf5": {
+    "commit": "7bf340440909d468dbb3cf41f0ea0d87f5050cea",
+    "tag": "hdf5-1.14.6",
+    "url": "https://github.com/HDFGroup/hdf5.git"
+  },
+  "ihtacmakecommon": {
+    "commit": "4e05d29dd7593ece570532e4641fedc8379672dd",
+    "tag": null,
+    "url": "https://git.rwth-aachen.de/ihta/cmake/ihtacmakecommon.git"
+  },
+  "ihtautilitylibs": {
+    "commit": "773df1451ac5bd10349f833eec6413dc7f402eef",
+    "tag": null,
+    "url": "https://git.rwth-aachen.de/ita/ihtautilitylibs"
+  },
+  "itacorelibs": {
+    "commit": "b82d1daaf206a70838520f2f96adf24524bc4012",
+    "tag": null,
+    "url": "https://git.rwth-aachen.de/ita/ITACoreLibs"
+  },
+  "jsoncons": {
+    "commit": "68fafa1a69367768d7d452d45432048b93ba5c9b",
+    "tag": "v1.3.0",
+    "url": "https://github.com/danielaparker/jsoncons.git"
+  },
+  "nanoflann": {
+    "commit": "9a653cb243db6a09c94f833b28732b62f033e2b5",
+    "tag": "v1.7.1",
+    "url": "https://github.com/jlblancoc/nanoflann.git"
+  },
+  "netcdf-c": {
+    "commit": "3a6b1debf1557f07b606ce3653e44f0d711203be",
+    "tag": "v4.9.3",
+    "url": "https://github.com/Unidata/netcdf-c.git"
+  },
+  "netcdf-cxx4": {
+    "commit": "f8882188267488ef801691e69ad072e3eb217ad8",
+    "tag": "v4.3.1",
+    "url": "https://github.com/Unidata/netcdf-cxx4.git"
+  },
+  "nlohmann_json": {
+    "commit": "7194245a314d142a5560f6906a87f7c67ebbcf2e",
+    "tag": "v3.10.1",
+    "url": "https://github.com/nlohmann/json.git"
+  },
+  "opendaff": {
+    "commit": "cda7126ccdc55a544701b3daa06ee70b15975ce9",
+    "tag": null,
+    "url": "https://git.code.sf.net/p/opendaff/git"
+  },
+  "openmesh": {
+    "commit": "db8c0608830ae7324b2b2e1d91e4db565b2d3eae",
+    "tag": "OpenMesh-8.1",
+    "url": "https://www.graphics.rwth-aachen.de:9000/OpenMesh/OpenMesh"
+  },
+  "pkgproj": {
+    "commit": "48db48207f16008bc9ae265ee0c7ee71c826fba1",
+    "tag": "v1.10.0",
+    "url": "https://github.com/TheLartians/PackageProject.cmake.git"
+  },
+  "pocketfft": {
+    "commit": "32424d2067c2e8043dc646a4e49754b2b40cc549",
+    "tag": null,
+    "url": "https://gitlab.mpcdf.mpg.de/mtr/pocketfft"
+  },
+  "poly-scribe": {
+    "commit": "352ef53047d069364d4d011cfbe123edcdc0cfb0",
+    "tag": "v1.0.0",
+    "url": "https://github.com/pingelit/poly-scribe.git"
+  },
+  "portaudio": {
+    "commit": "147dd722548358763a8b649b3e4b41dfffbcfbb6",
+    "tag": "v19.7.0-RC2",
+    "url": "https://github.com/PortAudio/portaudio.git"
+  },
+  "ppl_format": {
+    "commit": "d75b6a6d06332780ff37b8a2a55d609995befd09",
+    "tag": "v1.0.0",
+    "url": "https://git.rwth-aachen.de/ihta/simulation/propagation-path-list"
+  },
+  "reflect-cpp": {
+    "commit": "c5f0a241c7ec5b27996144f260660a504fe13ed1",
+    "tag": null,
+    "url": "https://github.com/getml/reflect-cpp.git"
+  },
+  "samplerate": {
+    "commit": "a147b6dc4046deda22b2aa772b348717de772e2b",
+    "tag": "0.2.1",
+    "url": "https://github.com/libsndfile/libsamplerate.git"
+  },
+  "sndfile": {
+    "commit": "d60deb5d8691997b6bb28d88e3b43f322073d146",
+    "tag": "1.0.31",
+    "url": "https://github.com/libsndfile/libsndfile.git"
+  },
+  "spdlog": {
+    "commit": "ad0e89cbfb4d0c1ce4d097e134eb7be67baebb36",
+    "tag": "v1.11.0",
+    "url": "https://github.com/gabime/spdlog.git"
+  },
+  "tbb": {
+    "commit": "261fe22630bd61ec137b66f6dd4403ad7ab36a14",
+    "tag": "v2021.3.0",
+    "url": "https://github.com/oneapi-src/oneTBB.git"
+  },
+  "vista": {
+    "commit": "29d83c51841d146fd68e8661b929dee07cf52016",
+    "tag": null,
+    "url": "https://git.rwth-aachen.de/ita/ViSTA"
+  },
+  "yaml-cpp": {
+    "commit": "f7320141120f720aecc4c32be25586e7da9eb978",
+    "tag": "0.8.0",
+    "url": "https://github.com/jbeder/yaml-cpp.git"
+  },
+  "zlib": {
+    "commit": "04f42ceca40f73e2978b50e93806c2a18c1281fc",
+    "tag": "v1.2.13",
+    "url": "https://github.com/madler/zlib.git"
+  }
+}

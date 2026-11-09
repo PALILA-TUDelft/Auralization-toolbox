@@ -46,3 +46,16 @@ def ini2dict(filename):
                     else:
                         result[clean_key(key)] = val
     return result
+
+
+def ini_int(ini, key, default):
+    """Integer ini setting. Accepts '1', '1.0', '4.8e4' (MATLAB's str2double reads all of them); anything that is not a whole
+    number raises a clear error instead of being silently truncated."""
+    raw = ini.get(key, default)
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"ini setting '{key}' must be a number, got {raw!r}") from None
+    if not value.is_integer():
+        raise ValueError(f"ini setting '{key}' must be a whole number, got {raw!r}")
+    return int(value)

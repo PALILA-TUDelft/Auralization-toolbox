@@ -1,0 +1,21 @@
+--- a/cxx4/CMakeLists.txt
++++ b/cxx4/CMakeLists.txt
+@@ -1,7 +1,5 @@
+ ## This is a CMake file, part of Unidata's netcdf-cxx package.
+ 
+-INCLUDE_DIRECTORIES(".")
+-
+ ###
+ # Set up headers and sources
+ ###
+@@ -32,7 +30,9 @@
+ SET(ALL_TLL_LIBS ${ALL_TLL_LIBS} ${EXTRA_DEPS} PARENT_SCOPE)
+ 
+ ADD_LIBRARY(netcdf-cxx4 ${CXX_SOURCES})
+-TARGET_INCLUDE_DIRECTORIES(netcdf-cxx4 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
++TARGET_INCLUDE_DIRECTORIES(netcdf-cxx4 PUBLIC
++  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++  $<INSTALL_INTERFACE:include>)
+ TARGET_LINK_LIBRARIES(netcdf-cxx4 ${ALL_TLL_LIBS})
+ SET_TARGET_PROPERTIES(netcdf-cxx4 PROPERTIES
+   VERSION ${NCXX_LIB_VERSION}

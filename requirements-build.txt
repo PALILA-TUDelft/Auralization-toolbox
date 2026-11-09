@@ -1,0 +1,12 @@
+# Build-time only dependencies for the ART native module (_art_core).
+# Not needed to run the toolbox with the prebuilt binaries.
+#   pip install -r requirements-build.txt
+#   powershell -ExecutionPolicy Bypass -File tools/build_art.ps1
+#
+# Also required, outside pip:
+#   - Visual Studio 2019 Build Tools with the 'Desktop development with C++' workload
+#     (MSVC v142). Only Visual Studio 2019 is supported: ITA's CMake preset requires
+#     the 'Visual Studio 16 2019' generator.
+#   - CMake >= 3.24 (3.27.9 tested; 3.24 is needed for CMAKE_PROJECT_TOP_LEVEL_INCLUDES)
+#   - git
+nanobind==2.13.0  # the version the bindings were built and tested with; 3.x is untested
