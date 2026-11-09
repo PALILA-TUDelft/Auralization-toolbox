@@ -1,0 +1,46 @@
+diff --git a/src/ITAPropagationPathSim/BaseEngine/BaseImageSource.cpp b/src/ITAPropagationPathSim/BaseEngine/BaseImageSource.cpp
+index d2d5242..dd75ef0 100644
+--- a/src/ITAPropagationPathSim/BaseEngine/BaseImageSource.cpp
++++ b/src/ITAPropagationPathSim/BaseEngine/BaseImageSource.cpp
+@@ -1,4 +1,4 @@
+-#include <ITAPropagationPathSim\BaseEngine\BaseImageSource.h>
++#include <ITAPropagationPathSim/BaseEngine/BaseImageSource.h>
+ 
+ 
+ // Used Namespaces
+diff --git a/src/ITAPropagationPathSim/CombinedModel/PropagationEngine.cpp b/src/ITAPropagationPathSim/CombinedModel/PropagationEngine.cpp
+index 575bd8b..aace704 100644
+--- a/src/ITAPropagationPathSim/CombinedModel/PropagationEngine.cpp
++++ b/src/ITAPropagationPathSim/CombinedModel/PropagationEngine.cpp
+@@ -1,7 +1,7 @@
+-#include <ITAPropagationPathSim\CombinedModel\DiffractionLocator.h>
+-#include <ITAPropagationPathSim\CombinedModel\ImageConstructor.h>
+-#include <ITAPropagationPathSim\CombinedModel\PropagationEngine.h>
+-#include <ITAPropagationPathSim\CombinedModel\ReflectionLocator.h>
++#include <ITAPropagationPathSim/CombinedModel/DiffractionLocator.h>
++#include <ITAPropagationPathSim/CombinedModel/ImageConstructor.h>
++#include <ITAPropagationPathSim/CombinedModel/PropagationEngine.h>
++#include <ITAPropagationPathSim/CombinedModel/ReflectionLocator.h>
+ #include <ITAStopWatch.h> //TODO:Delete, just for testing
+ #include <ITAStringUtils.h>
+ 
+diff --git a/src/ITAPropagationPathSim/CombinedModel/ReflectionLocator.cpp b/src/ITAPropagationPathSim/CombinedModel/ReflectionLocator.cpp
+index e4df8a4..8648296 100644
+--- a/src/ITAPropagationPathSim/CombinedModel/ReflectionLocator.cpp
++++ b/src/ITAPropagationPathSim/CombinedModel/ReflectionLocator.cpp
+@@ -1,4 +1,4 @@
+-#include <ITAPropagationPathSim\CombinedModel\ReflectionLocator.h>
++#include <ITAPropagationPathSim/CombinedModel/ReflectionLocator.h>
+ 
+ bool ITAPropagationPathSim::CombinedModel::Reflection::ConstructPointsOfReflection( std::shared_ptr<const ITAGeo::CPropagationAnchor> pSensor,
+                                                                                     const std::vector<CPropagationShapeShared> pPropagationListsIn,
+diff --git a/src/ITAPropagationPathSim/UrbanEngine/UrbanImageSource.cpp b/src/ITAPropagationPathSim/UrbanEngine/UrbanImageSource.cpp
+index f41145c..ebd4bb9 100644
+--- a/src/ITAPropagationPathSim/UrbanEngine/UrbanImageSource.cpp
++++ b/src/ITAPropagationPathSim/UrbanEngine/UrbanImageSource.cpp
+@@ -1,4 +1,4 @@
+-#include <ITAPropagationPathSim\UrbanEngine\UrbanImageSource.h>
++#include <ITAPropagationPathSim/UrbanEngine/UrbanImageSource.h>
+ 
+ 
+ // Used Namespaces

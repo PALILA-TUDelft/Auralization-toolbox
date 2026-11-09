@@ -29,6 +29,10 @@ TARGETS=(
     "ITAGeo:ITAGeo.patch"
     "ITAGeo:ITAGeo-unix.patch"
     "ITAPropagationModels:ITAPropagationModels.patch"
+    # Not applied by apply_ita_patches.ps1: wrong-case folder names and backslashes in
+    # #include paths only break case-sensitive file systems and non-Windows compilers.
+    "ITAPropagationModels:ITAPropagationModels-unix.patch"
+    "ITAPropagationPathSim:ITAPropagationPathSim-unix.patch"
 )
 
 failed=()

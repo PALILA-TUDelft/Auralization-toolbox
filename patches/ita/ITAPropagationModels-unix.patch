@@ -1,0 +1,81 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 18e6315..c1cd2ad 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,43 +24,43 @@ add_subdirectory (external_libs)
+ ihta_add_library (
+ 	NAME ${PROJECT_NAME}
+ 	SOURCES include/ITAPropagationModels/Atmosphere/AirAttenuation.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationParameterEngine.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationConfig.h
+-			include/ITApropagationModels/PropagationParameterEngine/AuUnits.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationParameters/BasePropagationParameters.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationParameters/FrequencySpectrum.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationParameters/SingleData.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/BaseModule.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/ModuleFactory.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/DumbReflection.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/BasicReflection.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/DumbDiffraction.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/UTDDiffraction.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/HOUTD.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/DumbSpreadingLoss.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLoss.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLossKim.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/DumbAirAttenuation.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/AirAttenuationISO9613.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/HomogeneousPropagationDelay.h
+-			include/ITApropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/DumbPropagationDelay.h
+-			include/ITApropagationModels/PropagationParameterEngine/UtilsPPE.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationParameterEngine.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationConfig.h
++			include/ITAPropagationModels/PropagationParameterEngine/AuUnits.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationParameters/BasePropagationParameters.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationParameters/FrequencySpectrum.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationParameters/SingleData.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/BaseModule.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ModuleFactory.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/DumbReflection.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/BasicReflection.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/DumbDiffraction.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/UTDDiffraction.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/HOUTD.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/DumbSpreadingLoss.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLoss.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLossKim.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/DumbAirAttenuation.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/AirAttenuationISO9613.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/HomogeneousPropagationDelay.h
++			include/ITAPropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/DumbPropagationDelay.h
++			include/ITAPropagationModels/PropagationParameterEngine/UtilsPPE.h
+ 			src/ITAPropagationModels/Atmosphere/AirAttenuation.cpp
+ 			src/ITAPropagationModels/PropagationParameterEngine/PropagationParameterEngine.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationConfig.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/ModuleFactory.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/DumbReflection.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/BasicReflection.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/DumbDiffraction.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/UTDDiffraction.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/HOUTD.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/DumbSpreadingLoss.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationConfig.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ModuleFactory.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/DumbReflection.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/ReflectionModules/BasicReflection.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/DumbDiffraction.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/UTDDiffraction.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/DiffractionModules/HOUTD.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/DumbSpreadingLoss.cpp
+ 			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLoss.cpp
+ 			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/SpreadingLossModules/SpreadingLossKim.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/DumbAirAttenuation.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/AirAttenuationISO9613.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/HomogeneousPropagationDelay.cpp
+-			src/ITApropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/DumbPropagationDelay.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/DumbAirAttenuation.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/AirAttenuationModules/AirAttenuationISO9613.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/HomogeneousPropagationDelay.cpp
++			src/ITAPropagationModels/PropagationParameterEngine/PropagationModules/PropagationDelayModules/DumbPropagationDelay.cpp
+ 			src/ITAPropagationModels/PropagationParameterEngine/UtilsPPE.cpp
+ 			src/ITAPropagationModels/PropagationParameterEngine/PropagationParameters/FrequencySpectrum.cpp
+ 

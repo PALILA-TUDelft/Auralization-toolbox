@@ -187,7 +187,8 @@ if [ "$SKIP_ITA" -eq 0 ]; then
     # Only the two libraries the bindings link against; their dependencies come
     # with them. Building all of ITA also builds apps and netcdf-cxx4, which ART
     # does not use and which does not compile in this configuration.
-    cmake --build "$ITA_BUILD" --config Release --target ITAGeo ITAPropagationPathSim
+    # -k 0: keep compiling after an error, so one run reports every failing file.
+    cmake --build "$ITA_BUILD" --config Release --target ITAGeo ITAPropagationPathSim -- -k 0
 fi
 
 if [ ! -d "$ITA_BUILD" ]; then

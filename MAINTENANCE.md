@@ -150,8 +150,8 @@ what the repository's `.venv` had installed on 2026-11-09.
 
 ITA is a git submodule, so changes to it live in [patches/ita/](patches/ita/) and
 are replayed by `tools/apply_ita_patches.ps1` (`.sh` on macOS and Linux).
-`ITAPropagationPathSim` has no local changes, so the **ray-tracing code is
-unmodified upstream code**. Every local change is to build configuration.
+On Windows `ITAPropagationPathSim` has no local changes, so the **ray-tracing code is
+unmodified upstream code**; on macOS and Linux only seven `#include` path separators differ. Every local change is to build configuration.
 
 All patches below were confirmed applied, and the checkout has no other edits
 (line endings aside; on Windows `git status` shows many files as modified because

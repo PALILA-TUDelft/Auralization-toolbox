@@ -14,3 +14,29 @@ index e6731b1..ad9c010 100644
  	target_sources (${LIB_TARGET} PRIVATE ITAConfigUtilsSimpleIniImpl.cpp)
  	target_compile_definitions (${LIB_TARGET} PRIVATE USE_SIMPLEINI)
  endif ()
+diff --git a/ITACTC/CMakeLists.txt b/ITACTC/CMakeLists.txt
+index 8524097..ac18ad3 100644
+--- a/ITACTC/CMakeLists.txt
++++ b/ITACTC/CMakeLists.txt
+@@ -35,8 +35,8 @@ ihta_add_library (
+ # Additional source files
+ if (ITA_CTC_WITH_DUAL_CTC)
+ 	target_sources (
+-		${LIB_TARGET} PRIVATE include/ITADualCTC.h include/ITADualCTCStreamFilter.h src/ITADualCTC.cpp
+-							  src/ITADualCTCStreamFilter.cpp
++		${LIB_TARGET} PRIVATE include/ITADualCTC.h include/ITADualCTCStreamfilter.h src/ITADualCTC.cpp
++							  src/ITADualCTCStreamfilter.cpp
+ 	)
+ endif ()
+ if (ITA_CTC_WITH_N_CTC)
+@@ -47,8 +47,8 @@ if (ITA_CTC_WITH_N_CTC)
+ endif ()
+ if (ITA_CTC_WITH_QUAD_CTC)
+ 	target_sources (
+-		${LIB_TARGET} PRIVATE include/ITAQuadCTC.h include/ITAQuadCTCStreamFilter.h src/ITAQuadCTC.cpp
+-							  src/ITAQuadCTCStreamFilter.cpp
++		${LIB_TARGET} PRIVATE include/ITAQuadCTC.h include/ITAQuadCTCStreamfilter.h src/ITAQuadCTC.cpp
++							  src/ITAQuadCTCStreamfilter.cpp
+ 	)
+ endif ()
+ 
