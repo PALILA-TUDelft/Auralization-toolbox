@@ -326,8 +326,7 @@ whose source is in [bindings/src/ARTPythonBindings.cpp](bindings/src/ARTPythonBi
 
 **Full build and install instructions are in [BUILD.md](BUILD.md)**: the tested environment, the exact steps, how the build is made reproducible, and troubleshooting. The sections below are a short summary.
 
-`_art_core` and the ITA DLLs are **build products and are not tracked in git**
-(they are compiler- and Python-version-specific). Everything except eigenray
+A local build goes into `bin/`, which is not tracked in git. The Windows / Python 3.13 binaries are included in the repository. Everything except eigenray
 tracing works without them: `art_bindings` imports fine, and the native module
 is loaded lazily on the first `find_eigenrays` call, which raises an `ImportError`
 explaining how to install it.
@@ -344,20 +343,11 @@ The compiled module only works with the Python version it was built for. The pre
 
 #### Option A: prebuilt binaries (Windows, recommended)
 
-Download `art-win-amd64-py313.zip` from the [GitHub Releases](../../releases) page and unpack it into a `bin/` folder in the repository root. **These binaries are for Python 3.13 only**; with any other Python version, use Option B.
+The binaries for Windows x64 and Python 3.13 are included in `prebuilt/win-x64-py313/`, so there is nothing to download. With any other Python version, use Option B.
 
-The archive needs the Microsoft Visual C++ Redistributable (x64), which Python normally installs. Details are in [BUILD.md](BUILD.md#option-a-prebuilt-binaries-windows-python-313).
+They need the Microsoft Visual C++ Redistributable (x64), which Python normally installs. Details are in [BUILD.md](BUILD.md#option-a-prebuilt-binaries-windows-python-313).
 
-The archive unpacks to:
-
-```text
-bin/
-├── _art_core.cp313-win_amd64.pyd
-├── ITAGeo.dll
-└── ... (the other ITA DLLs)
-```
-
-The toolbox looks in `bin/` automatically.
+The toolbox finds this folder automatically.
 
 #### Option B: build from source (Windows)
 
