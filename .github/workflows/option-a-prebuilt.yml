@@ -48,6 +48,7 @@ jobs:
       - name: Python packages
         shell: powershell
         run: |
+          $ErrorActionPreference = 'Continue'   # pip warnings go to stderr; judge by exit code only
           python -m pip install -r requirements.txt
 
       - name: Get the prebuilt binaries into bin/
@@ -57,21 +58,27 @@ jobs:
           ZIP_URL: ${{ inputs.zip_url }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
         run: |
-          $ErrorActionPreference = 'Stop'
+          # The runner's default is 'Stop', under which Windows PowerShell 5.1 aborts on ANY
+          # text a native program (gh) writes to stderr, with an empty error message. Use
+          # 'Continue', print gh's output ourselves and check exit codes explicitly.
+          $ErrorActionPreference = 'Continue'
+          function Fail($msg) { Write-Host "::error::$msg"; exit 1 }
+          function Gh { & gh @args 2>&1 | ForEach-Object { "$_" } | Write-Host }
+
           New-Item -ItemType Directory -Force bin | Out-Null
           if ($env:BUILD_RUN_ID) {
             Write-Host "Using artifact art-win-amd64-py313 of run $env:BUILD_RUN_ID"
-            gh run download $env:BUILD_RUN_ID --repo $env:GITHUB_REPOSITORY --name art-win-amd64-py313 --dir bin
-            if ($LASTEXITCODE -ne 0) { throw 'artifact download failed (expired after 14 days, or wrong run ID?)' }
+            Gh run download $env:BUILD_RUN_ID --repo $env:GITHUB_REPOSITORY --name art-win-amd64-py313 --dir bin
+            if ($LASTEXITCODE -ne 0) { Fail 'artifact download failed (expired after 14 days, or wrong run ID?)' }
           } else {
             $zip = Join-Path $env:RUNNER_TEMP 'art-win-amd64-py313.zip'
             if ($env:ZIP_URL) {
               Write-Host "Downloading $env:ZIP_URL"
               Invoke-WebRequest -Uri $env:ZIP_URL -OutFile $zip
             } else {
-              Write-Host 'Downloading the asset from the latest GitHub Release'
-              gh release download --repo $env:GITHUB_REPOSITORY --pattern art-win-amd64-py313.zip --dir $env:RUNNER_TEMP --clobber
-              if ($LASTEXITCODE -ne 0) { throw 'no Release with an art-win-amd64-py313.zip asset exists yet' }
+              Write-Host 'No zip_url or build_run_id given: using the latest GitHub Release'
+              Gh release download --repo $env:GITHUB_REPOSITORY --pattern art-win-amd64-py313.zip --dir $env:RUNNER_TEMP --clobber
+              if ($LASTEXITCODE -ne 0) { Fail 'No Release with an art-win-amd64-py313.zip asset exists yet. Run the workflow again and fill in build_run_id (or zip_url).' }
             }
             Expand-Archive -Path $zip -DestinationPath bin -Force
           }
@@ -93,6 +100,7 @@ jobs:
       - name: Ray-trace check (expects 2 rays, [0, 1])
         shell: powershell
         run: |
+          $ErrorActionPreference = 'Continue'   # Python warnings go to stderr; judge by exit code only
           @'
           from auralization.private.propagation.art_bindings import art_core_available, create_atmosphere_json, find_eigenrays
           assert art_core_available(), "ART module not found"
