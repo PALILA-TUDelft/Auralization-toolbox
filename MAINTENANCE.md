@@ -258,7 +258,8 @@ cannot run twice, and `-CleanIta` deletes it.
    `python verification/run_all_verifications.py`. Any numerical difference needs
    an explanation before the update is accepted.
 8. **Record the update**: commit the new submodule pointer and patches, update this
-   page and the tables in `BUILD.md`, and republish `art-win-amd64-py313.zip`.
+   page and the tables in `BUILD.md`, and update `prebuilt/win-x64-py313/` (see
+   "Updating the committed binaries" in `BUILD.md`).
 
 ---
 

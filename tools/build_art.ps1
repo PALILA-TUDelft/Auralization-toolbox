@@ -238,4 +238,4 @@ finally { Pop-Location }
 
 Write-Host ''
 Write-Host "Done. ART staged in $BinDir (Python $pyVer, win-amd64)." -ForegroundColor Green
-Write-Host 'bin/ is gitignored. To share it, attach a zip of it to a GitHub Release.' -ForegroundColor DarkGray
+Write-Host 'bin/ is gitignored. To update the committed binaries, see BUILD.md.' -ForegroundColor DarkGray

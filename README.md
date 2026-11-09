@@ -374,7 +374,7 @@ If your binaries are somewhere else, point to them with the environment variable
 
 ## Large data
 
-The repository contains the code, the comparison scripts and the reference figures. The large, regenerable data is shared as **GitHub Release archives**, and `tools/unpack_release_data.ps1` puts them back in place.
+The repository contains the code, the comparison scripts and the reference figures. The large verification data and the per-scenario results are not included.
 
 ## Third-party data and attribution
 

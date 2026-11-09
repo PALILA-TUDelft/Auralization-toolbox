@@ -27,7 +27,7 @@ gui_output/
 # README shows them), including any .wav you choose to commit there.
 #
 # The per-scenario run outputs in results_auralization/<scenario>/... (~450 MB
-# of figures plus 19 wavs) are regenerable and ship as Release archives:
+# of figures plus 19 wavs) are regenerable and stay local. To archive them:
 #   powershell -File tools/pack_release_data.ps1 -IncludeResults
 results_auralization/*/
 
@@ -37,8 +37,8 @@ input_data/results_auralization/
 # --- Verification data ---
 # The comparison scripts, manifests, scenario parameters, grade reports and
 # VERIFICATION_MAP.md ARE tracked. The per-scenario numeric dumps (~5.8 GB)
-# and the generated plot-comparison report are distributed as separate
-# archives instead:   powershell -File tools/pack_release_data.ps1
+# and the generated plot-comparison report stay local. To archive them:
+#   powershell -File tools/pack_release_data.ps1
 #
 # This rule only affects files not already tracked. The 24 reference .npz/.mat
 # files committed before it stay tracked; see the README.
