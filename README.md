@@ -215,6 +215,8 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 ```text
 .
 ├── README.md
+├── BUILD.md                           how to build and install ART
+├── MAINTENANCE.md                     notes for updating ITA
 ├── main.py
 ├── gui.py
 ├── globals.py
@@ -247,6 +249,7 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 │   ├── io.py
 │   ├── mhdrload.py
 │   ├── ini_parser.py
+│   ├── interpolate_panam_input.py
 │   ├── flight_profile_utils.py
 │   ├── create_results_folder.py
 │   ├── plot_style.py
@@ -254,13 +257,16 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 ├── bindings/                          ART Python bindings (C++ / nanobind)
 ├── ITAGeometricalAcoustics/           ART source (git submodule)
 ├── patches/                           local patches for the submodule
-├── tools/                             ART build and release-data scripts
+├── prebuilt/                          compiled ART binaries (Windows, Python 3.13)
+├── tools/                             ART build and data-archive scripts
+├── .github/workflows/                 automated build and install checks
 ├── input_data/
 │   ├── input_file_auralization.ini
 │   ├── auralization_input.dat
 │   ├── geschw_hoehe_verlauf.dat
 │   ├── FABIAN_HRIR_measured_HATO_0.mat
 │   ├── FABIAN_HRIR_measured_HATO_0.sofa
+│   ├── scenario_inputs/
 │   └── scenarios/
 ├── results_auralization/              reference figures
 ├── README_images/
@@ -269,6 +275,7 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
     ├── manifest.py
     ├── run_scenarios.py
     ├── run_all_verifications.py
+    ├── generate_multi_receiver_input.py
     ├── check_scenario_complete.py
     ├── compare_plots.py
     ├── test_python_port_fixes.py
@@ -282,10 +289,14 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 ## File overview 
 ### Root-level files 
 - `README.md`: Main repository documentation, including project context, installation, usage, and repository structure.
+- `BUILD.md`: Complete instructions for installing or building the ART module, including the tested environment and troubleshooting.
+- `MAINTENANCE.md`: Notes for keeping the ITA dependency up to date: the local patches, the pinned dependencies and the update procedure.
 - `requirements.txt`: Lists the Python dependencies required to run the current implementation.
+- `requirements-build.txt`: Additional Python dependency needed only to build the ART module from source.
 - `globals.py`: Stores shared global configuration variables used across the auralization workflow, such as the sampling frequency, PANAM time step, input configuration dictionary, and acoustic reference pressure.
 - `setup_environment.py`: Sets up the Python path for the repository by appending the root folder and key subfolders such as `auralization/` and `utilities/`. It also still contains some legacy path references from the MATLAB-to-Python transition.
 - `main.py`: Main entry point of the workflow. It loads the input configuration, reads the source-model and flight-profile data, prepares trimmed receiver-specific inputs, creates results folders, and calls the main auralization engine for each receiver.
+- `gui.py`: Graphical front-end that runs the `main.py` workflow as a separate process.
 
 ### `auralization/` 
 - `master_auralization_engine_airframe.py`: Core orchestration function for the source-synthesis stage. It constructs the auralization time vectors, synthesizes tonal fan harmonics and buzz-saw noise, synthesizes broadband engine and airframe noise, combines these components into engine and overall signals, and then calls the propagation stage. This mirrors the structure of the original MATLAB implementation closely. 
@@ -296,19 +307,27 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 - `tonal_synthesis.py`: Synthesizes tonal signals from time-varying SPL and frequency trajectories. It interpolates tonal envelopes to the auralization time base, converts SPL to pressure amplitude, generates the tonal waveform, and optionally plots the resulting spectrogram. 
 - `broadband_synthesis_smooth.py`: Synthesizes broadband noise in the time domain from band-based source data. It converts spectral bands into narrowband bins, applies overlap-add style block synthesis, and generates broadband engine or airframe signals. 
 - `convert_freq_bands.py`: Helper routine used during broadband synthesis to convert band-based source information into a narrowband spectral representation suitable for time-domain reconstruction. 
+- `get_emission_angle.py`: Extracts the PANAM emission angles across all time steps.
+- `save_wav.py`: Writes a signal to a `.wav` file with optional attenuation.
 
 ### `auralization/private/propagation/` 
 - `get_propagation.py`: Main propagation driver. It reads atmospheric and ground parameters from the input configuration, generates the frequency vector, queries ART eigenrays, computes propagation times, and assembles propagation-related transfer-function outputs.
+- `apply_propagation.py`: Applies the atmospheric transfer functions to the synthesized signal using time-varying FIR filters and overlap-add convolution.
 - `atmosphere.py`: Defines the atmospheric configuration and atmosphere model used by the propagation stage.
 - `ground_reflection.py`: Contains the ground-reflection coefficient model used in the propagation calculations. 
 - `angles.py`: Provides angular post-processing utilities, including angle conversion for binaural/HRTF-related propagation outputs. 
 - `tf_model.py`: Builds the transfer-function representation used to apply propagation effects in the frequency domain. 
+- `hrtf.py`: Spherical-harmonic HRIR interpolation from the FABIAN `.mat` or `.sofa` data, used for binaural rendering.
 - `art_bindings.py`: Python interface to the ART (Atmospheric Ray Tracing) backend for eigenray computatio
-- ### `utilities/`
+
+### `utilities/`
 - `prepare_input_SQ.py`: Prepares receiver-specific input for synthesis. It removes duplicate timestamps, trims the source and spectrogram data around the relevant flyover window, and trims the corresponding flight-profile data consistently. 
 - `trim_data_time_distance_based.py`: Helper function used to determine the trimming interval based on source-receiver distance and a user-defined trimming time window.
+- `interpolate_panam_input.py`: Increases the time resolution of the PANAM source data by inserting averaged midpoints between consecutive samples.
 - `plot_utils.py`: Plotting utilities used across the workflow, including spectrogram plotting and some diagnostic comparison plots for synthesis verification.
 - `io.py`: Handles file I/O tasks, including conversion of PANAM/SQAT-style source data into the internal Python data structures used by the workflow. - `ini_parser.py` Parses the `.ini` configuration file and makes the input parameters accessible to the rest of the workflow.
+- `mhdrload.py`: Reads text data files with headers, such as the PANAM output.
+- `ini_parser.py`: Parses `.ini` configuration files into nested dictionaries.
 - `flight_profile_utils.py`: Reads and processes the flight-profile input and supports optional visualization and figure saving.
 - `create_results_folder.py`: Creates the output folder structure used to store results for each receiver and for the case as a whole.
 - `plot_style.py`: Defines the plot style
@@ -317,6 +336,7 @@ At present, `flight_procedure` is set to `2`, corresponding to a flyover case.
 ### Other folders
 - `input_data/`: Expected location for case-specific input files such as the `.ini` configuration, the source-model data file, and the flight-profile file. 
 - `verification/`: Per-scenario outputs of Python and MATLAB, the manifest of what has to be compared, and the scripts that run perform the comparison.
+- `prebuilt/`: Compiled ART binaries for Windows x64 and Python 3.13, with their provenance and third-party licenses.
 
 ## ART (Atmospheric Ray Tracing) native module
 
