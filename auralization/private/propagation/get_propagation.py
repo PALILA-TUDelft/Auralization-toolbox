@@ -191,7 +191,7 @@ def get_propagation(input_file, flight_profile, receiver, nfft, time, emission_a
 
     launchAngle_direct_spherical = angles["direct_path"]
     launchAngle_reflected_spherical = angles["reflected_path"]
-    launchAngle_reflected_spherical_smooth = moving_average(launchAngle_reflected_spherical, window=10)
+    launchAngle_reflected_spherical_smooth = moving_average(launchAngle_reflected_spherical, window=10 * globals.panam_upsampling)
 
     # ---- output ----
     out = {

@@ -55,9 +55,10 @@ def broadband_synthesis_smooth(input_data, source, time_panam, time, smoothing, 
     WinCorr = True
     OvlpCorr = True
 
-    block_len = round(fs * dt_panam)
+    # Interpolated PANAM samples must not shorten the block: that would coarsen df and empty the lowest bands
+    block_len = round(fs * dt_panam) * globals.panam_upsampling
     hop_size_factor = 5
-    hop_size = block_len // hop_size_factor
+    hop_size = block_len // (hop_size_factor * globals.panam_upsampling)
     # MATLAB: floor(fs*time(end)/HopSize). The tolerance guards against x.9999999999 due to round-off.
     n_blocks = int(np.floor(fs * time[-1] / hop_size + 1e-6))
     L = hop_size * n_blocks + block_len - hop_size

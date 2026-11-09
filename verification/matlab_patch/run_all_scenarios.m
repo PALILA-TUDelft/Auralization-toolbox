@@ -72,9 +72,13 @@ for k = 1:numel(inis)
         for s = 1:numel(stale), delete(fullfile(stale(s).folder, stale(s).name)); end
     end
 
+    % a scenario with its own source data has a folder input_data/scenario_inputs/<scenario>
+    input_path = fullfile(main_input_path, 'scenario_inputs', name);
+    if ~exist(input_path, 'dir'), input_path = main_input_path; end
+
     try
         tic;
-        auralization_master(main_input_path, name, ini_path, results_path, vroot);
+        auralization_master(input_path, name, ini_path, results_path, vroot);
         status{end+1} = sprintf('%-45s ok      (%.0f s)', name, toc); %#ok<AGROW>
     catch ME
         status{end+1} = sprintf('%-45s FAILED  %s', name, ME.message); %#ok<AGROW>

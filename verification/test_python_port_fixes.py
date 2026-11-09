@@ -338,6 +338,23 @@ def _():
     assert abs(np.fft.rfft(l, axis=0)[-1]).max() < 1e-12     # Nyquist bin is exactly 0
 
 
+@test("HRIR: the FABIAN .sofa (SH decomposition on load) gives the same HRIRs as the AKtools .mat coefficients")
+def _():
+    root = os.path.join(os.path.dirname(__file__), "..", "input_data")
+    mat, sofa = (os.path.join(root, f"FABIAN_HRIR_measured_HATO_0.{e}") for e in ("mat", "sofa"))
+    if not (os.path.exists(mat) and os.path.exists(sofa)):
+        return "skipped (FABIAN .mat/.sofa not found)"
+    rng = np.random.default_rng(0)
+    az, el = rng.uniform(0, 360, 300), rng.uniform(-90, 90, 300)
+    az[:4], el[:4] = [0, 90, 180, 270], [0, 0, 0, 0]
+    ref = hrir_interpolation(az, el, 0, mat)
+    out = hrir_interpolation(az, el, 0, sofa)
+    for ear, (a, b) in zip("LR", zip(ref, out)):
+        err = np.abs(a - b).max() / np.abs(a).max()
+        assert err < 1e-9, f"{ear} ear: max|delta|/max|ref| = {err:.2e}"
+    return f"max|delta|/max|ref| = {max(np.abs(a - b).max() / np.abs(a).max() for a, b in zip(ref, out)):.1e}"
+
+
 if __name__ == "__main__":
     width = max(len(n) for n, _, _ in results)
     n_fail = 0

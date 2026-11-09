@@ -39,9 +39,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 INI_DIR = os.path.join(REPO, "input_data", "scenarios")
 SCENARIO_ROOT = os.path.join(HERE, "scenarios")
+# a scenario with its own source data has a folder here (auralization_input.dat + geschw_hoehe_verlauf.dat)
+SCENARIO_INPUT_ROOT = os.path.join(REPO, "input_data", "scenario_inputs")
 
 sys.path.insert(0, HERE)
-from check_scenario_complete import check_scenario  # noqa: E402
+from check_scenario_complete import check_scenario, receiver_roots  # noqa: E402
 
 
 def warn_if_scenario0_differs():
@@ -91,7 +93,8 @@ def clean_stale_python_dumps(scenario_dir):
     if not os.path.isdir(scenario_dir):
         return
     n = 0
-    for pattern in ("*/*_python.npz", "*/python_trimmed_output.npz", "scenario_params_python.json"):
+    patterns = ("*/*_python.npz", "*/python_trimmed_output.npz", "scenario_params_python.json")
+    for pattern in patterns + tuple(os.path.join("Receiver_*", p) for p in patterns):
         for f in glob.glob(os.path.join(scenario_dir, pattern)):
             os.remove(f)
             n += 1
@@ -130,6 +133,9 @@ def main():
             cmd = [sys.executable, "main.py", "--ini", ini, "--tag", name,
                    "--results", os.path.join("results_auralization", name),
                    "--verification", "--verification-dir", sdir]
+            input_dir = os.path.join(SCENARIO_INPUT_ROOT, name)
+            if os.path.isdir(input_dir):
+                cmd += ["--input-dir", input_dir]
             fig = args.figures.strip().lower()
             if fig == "none":
                 cmd += ["--figures", "none", "--no-save-figs"]
@@ -149,37 +155,41 @@ def main():
                     break
                 continue
 
-        # completeness
-        try:
-            row["miss_py"], row["miss_ml"], _ = check_scenario(sdir, ini)
-        except Exception as e:  # e.g. Python params json absent because the run never produced it
-            print(f"  completeness check error: {e}")
+        for root in receiver_roots(sdir):       # the scenario folder, or one Receiver_<n> folder per receiver
+            root_row = dict(row, name=name if root == sdir else f"{name}/{os.path.basename(root)}")
 
-        # grading
-        report = os.path.join(sdir, "grade_report.txt")
-        rc = run_logged([sys.executable, os.path.join("verification", "run_all_verifications.py"),
-                         "--root", sdir], report)
-        with open(report, encoding="utf-8", errors="replace") as fh:
-            m = re.search(r"PASS:\s*(\d+)\s+FAIL:\s*(\d+)\s+SKIP:\s*(\d+)(?:\s+N/A:\s*(\d+))?", fh.read())
-        if m:
-            row["pass_"], row["fail"], row["skip"] = (int(x) for x in m.groups()[:3])
-            row["na"] = int(m.group(4) or 0)
-        summary.append(row)
+            # completeness
+            try:
+                root_row["miss_py"], root_row["miss_ml"], _ = check_scenario(root, ini)
+            except Exception as e:  # e.g. Python params json absent because the run never produced it
+                print(f"  completeness check error: {e}")
+
+            # grading
+            report = os.path.join(root, "grade_report.txt")
+            run_logged([sys.executable, os.path.join("verification", "run_all_verifications.py"),
+                        "--root", root], report)
+            with open(report, encoding="utf-8", errors="replace") as fh:
+                m = re.search(r"PASS:\s*(\d+)\s+FAIL:\s*(\d+)\s+SKIP:\s*(\d+)(?:\s+N/A:\s*(\d+))?", fh.read())
+            if m:
+                root_row["pass_"], root_row["fail"], root_row["skip"] = (int(x) for x in m.groups()[:3])
+                root_row["na"] = int(m.group(4) or 0)
+            summary.append(root_row)
 
     # ------------------------------------------------------------------ summary
     def fmt(v):
         return "-" if v is None else str(v)
 
     print("\n" + "=" * 100 + "\nSCENARIO CHAIN SUMMARY\n" + "=" * 100)
-    print(f"{'scenario':<42}{'python run':<18}{'missing py':>11}{'missing ml':>11}{'PASS':>6}{'FAIL':>6}{'SKIP':>6}{'N/A':>5}")
+    print(f"{'scenario':<50}{'python run':<18}{'missing py':>11}{'missing ml':>11}{'PASS':>6}{'FAIL':>6}{'SKIP':>6}{'N/A':>5}")
     ok = True
     for r in summary:
-        print(f"{r['name']:<42}{r['run']:<18}{fmt(r['miss_py']):>11}{fmt(r['miss_ml']):>11}"
+        print(f"{r['name']:<50}{r['run']:<18}{fmt(r['miss_py']):>11}{fmt(r['miss_ml']):>11}"
               f"{fmt(r['pass_']):>6}{fmt(r['fail']):>6}{fmt(r['skip']):>6}{fmt(r['na']):>5}")
         if r["run"].startswith("FAILED") or r["miss_py"] or r["miss_ml"] or r["fail"] or r["fail"] is None:
             ok = False
     print("=" * 100)
-    print("Per-scenario logs/reports: verification/scenarios/<name>/{run_python.log,grade_report.txt}")
+    print("Per-scenario logs/reports: verification/scenarios/<name>/{run_python.log,grade_report.txt} "
+          "(several receivers: grade_report.txt is in <name>/Receiver_<n>/)")
     if any(r["miss_ml"] for r in summary):
         print("MATLAB dumps are missing for some scenarios: run the MATLAB toolbox with the same ini, "
               "then re-run with --skip-run.")

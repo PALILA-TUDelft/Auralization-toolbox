@@ -1,6 +1,6 @@
 # Changes made to the MATLAB toolbox
 
-Changes to the original MATLAB toolbox (`auralization_master`) that affect its results. They were needed so that MATLAB and Python can be compared fairly. All are already applied.
+Changes to the original MATLAB toolbox (`auralization_master`) that affect its results. They were needed so that MATLAB and Python can be compared fairly. Changes 1 and 2 are already applied. Changes 3 to 5 are needed for the multi-receiver scenarios and have to be made by hand.
 
 ## 1. `attenuation_db` was never read
 
@@ -38,8 +38,41 @@ end
 
 ART defaults when a key is missing: constant wind 20 m/s along +x; log wind with friction velocity 0.6 m/s, roughness 0.1 m, direction +x. A direction that is not a unit vector is normalised by ART, with a warning.
 
-## 3. Removed a diagnostic HRIR call
+## 3. Receivers from the third onwards read the wrong time steps
 
-**File:** `auralization/private/get_FIR.m`
+**File:** `utilities/PANAM_SQAT_data_conversion.m`
 
-A test call to `AKhrirInterpolation` (`[hrir_test_l, hrir_test_r] = ...`, followed by a `save` and an `fprintf`) ran on every run, even for mono scenarios. It was deleted. It had no effect on the results.
+The start index of observer `j` was `(j-1)*(nTime+1)`, which is only correct for `j <= 2`. Receiver 3 lost its first time step and got one repeated step in its place, and each further receiver lost one more.
+
+```matlab
+a = (j-1)*nTime + 1;
+```
+
+Effect: only files with three or more receivers change.
+
+## 4. One set of verification dumps per receiver
+
+**File:** `auralization_master.m`
+
+Without this, every receiver overwrites the dumps of the previous one. It does not change any result. Add the first line just before `for i = 1:nReceiver`, and the `if` block as the first thing inside the loop:
+
+```matlab
+verification_root_scenario = verification_root;
+for i = 1:nReceiver
+    if nReceiver > 1 && ~isempty(verification_root_scenario)
+        verification_root = fullfile(verification_root_scenario, sprintf('Receiver_%d', i));
+    end
+```
+
+## 5. Files with exactly two receivers stopped with an error
+
+**File:** `utilities/PANAM_SQAT_data_conversion.m`
+
+The loop `for i = 1:(n_observer-2)` that sets `nTime_a` and `nTime_b` never runs with two receivers, so the next line stopped with `Unrecognized function or variable 'nTime_a'`. Replace the whole loop with:
+
+```matlab
+nTime_a = idx(2) - idx(1);                 % time-steps of the first observer
+nTime_b = numel(data) - idx(end) + 1;      % time-steps of the last observer
+```
+
+Effect: files with two receivers can be read. The check now compares the first and last receiver.

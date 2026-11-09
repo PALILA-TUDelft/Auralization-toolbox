@@ -31,6 +31,8 @@ Nothing is saved unless verification is switched on.
 | 6 | `isa_log_wind_binaural` | logarithmic wind |
 | 7 | `constant_wind_diagonal_mono` | constant wind, 10 m/s along `[1 1 0]` |
 | 8 | `bbn_smoothing2_mono` | broadband smoothing (`smoothings_emission_based = 2`) |
+| 9 | `three_receivers_binaural90` | three receivers (under the track, sideline, further along the track and higher), with its own source data |
+| 10 | `two_receivers_binaural90` | exactly two receivers (under the track, further along the track and higher), with its own source data |
 
 Scenario 0 is a copy of `input_data/input_file_auralization.ini`. `run_scenarios.py` warns if the two ever differ.
 
@@ -69,7 +71,8 @@ What counts as a match depends on the data:
 
 ## Good to know
 
-- With several receivers, each dump is overwritten by the last receiver. The scenarios use one.
+- With several receivers, each receiver has its own folder of dumps and its own report, in `verification/scenarios/<scenario>/Receiver_<n>/`.
+- A scenario with a folder `input_data/scenario_inputs/<scenario>/` reads its source data from there instead of `input_data/`. Only scenarios 9 and 10 do. Their data is synthetic, derived from the one-receiver file by `generate_multi_receiver_input.py`, because no PANAM output with several receivers is available. Before running them in MATLAB, apply changes 3 to 5 in [`matlab_patch/MATLAB_CHANGES.md`](matlab_patch/MATLAB_CHANGES.md).
 - Wind only affects the ray tracing (paths, travel times, angles). Neither toolbox has wind terms in the transfer function or the Doppler shift.
 - Scenario 8 compares the spectrum after smoothing. A single wrong index inside the smoothing loop would be too small to show up there, so it is covered by a unit test in `test_python_port_fixes.py`.
 

@@ -5,8 +5,11 @@
 #   .mat — pre-computed complex SH coefficients (from AKtools, fastest, exact match)
 #   .sofa — raw measured HRIRs (DOI: 10.14279/depositonce-5718.5, SH decomposition on load)
 #
-# Both use spherical harmonics interpolation, equivalent to the
-# 'measured_sh' mode in AKhrirInterpolation.
+# Both end in the same complex SH expansion, equivalent to the 'measured_sh' mode in
+# AKhrirInterpolation: the .mat file ships the coefficients, the .sofa file is decomposed with an
+# unweighted least-squares fit in the same basis. The AKtools coefficients are exactly that fit
+# (HRIRs from both files agree to ~1e-13, see verification/test_python_port_fixes.py).
+# Head-above-torso interpolation across HATO data sets is not implemented (HATO 0 data only).
 #
 # ATTRIBUTION: the FABIAN HRTF database must be cited in any publication that
 # uses the binaural output of this toolbox. See "Third-party data and
@@ -14,7 +17,6 @@
 
 import os
 import numpy as np
-from scipy.special import sph_harm_y
 from scipy.io import loadmat
 
 
@@ -22,32 +24,18 @@ _hrtf_cache: dict = {}
 
 
 # -----------------------------------------------------------------------
-# Real-valued SH basis (used for SOFA path)
+# Complex SH basis (AKtools / Williams convention, used by both the .mat and .sofa paths)
 # -----------------------------------------------------------------------
-def _sh_matrix_real(order, az_deg, el_deg):
-    """Build real-valued SH basis matrix using scipy.special.sph_harm_y."""
-    colat_rad = np.pi / 2 - np.radians(np.asarray(el_deg, dtype=float))
-    az_rad = np.radians(np.asarray(az_deg, dtype=float))
-
-    M = len(az_rad)
-    n_coeffs = (order + 1) ** 2
-    Y = np.zeros((M, n_coeffs))
-
-    idx = 0
-    for n in range(order + 1):
-        for m in range(-n, n + 1):
-            Y[:, idx] = sph_harm_y(n, m, colat_rad, az_rad).real
-            idx += 1
-
-    return Y
+def _sh_indices(order):
+    """(n, m) of every SH coefficient, ordered like the AKtools coefficient files (n ascending, m = -n..n)."""
+    n_arr = np.concatenate([np.full(2 * n + 1, n) for n in range(order + 1)])
+    m_arr = np.concatenate([np.arange(-n, n + 1) for n in range(order + 1)])
+    return n_arr, m_arr
 
 
-# -----------------------------------------------------------------------
-# Complex SH basis (used for .mat path — matches AKtools convention)
-# -----------------------------------------------------------------------
 def _sh_matrix_complex(n_arr, m_arr, az_deg, el_deg):
     """
-    Build complex SH basis matrix matching scipy.special.sph_harm convention.
+    Build the complex SH basis matrix (N_dirs, N_coeffs) in the convention of the FABIAN .mat coefficients.
     Uses associated Legendre functions (lpmv) directly, replacing deprecated sph_harm.
     """
     from scipy.special import lpmv
@@ -98,26 +86,34 @@ def _load_mat(mat_path):
 
 
 def _load_sofa(sofa_path, sh_order):
-    """Load SOFA file and decompose HRTFs into real SH coefficients."""
+    """Load a SOFA file and decompose the HRTFs into complex SH coefficients (same layout as _load_mat)."""
     import sofar
     sofa_obj = sofar.read_sofa(sofa_path)
     ir = sofa_obj.Data_IR                    # (M, 2, n_samples)
     src_pos = sofa_obj.SourcePosition        # (M, 3): [az, el, dist]
 
-    n_samples = ir.shape[2]
+    if str(sofa_obj.SourcePosition_Type).lower() != "spherical":
+        raise ValueError(f"{sofa_path}: SourcePosition_Type must be 'spherical', got {sofa_obj.SourcePosition_Type!r}")
+    n_dirs, _, n_samples = ir.shape
+    n_arr, m_arr = _sh_indices(sh_order)
+    if n_dirs < len(n_arr):
+        raise ValueError(f"SH order {sh_order} needs at least {len(n_arr)} directions, the SOFA file has {n_dirs}")
 
-    hrtf_left = np.fft.rfft(ir[:, 0, :], axis=1)
-    hrtf_right = np.fft.rfft(ir[:, 1, :], axis=1)
+    hrtf = np.concatenate([np.fft.rfft(ir[:, 0, :], axis=1),
+                           np.fft.rfft(ir[:, 1, :], axis=1)], axis=1)       # (M, 2 * n_freq)
 
-    Y = _sh_matrix_real(sh_order, src_pos[:, 0], src_pos[:, 1])
-
-    sh_left, _, _, _ = np.linalg.lstsq(Y, hrtf_left, rcond=None)
-    sh_right, _, _, _ = np.linalg.lstsq(Y, hrtf_right, rcond=None)
+    # Unweighted least squares: reproduces the AKtools coefficients of the FABIAN .mat file to ~1e-13
+    # (area-weighting the fit does not).
+    Y = _sh_matrix_complex(n_arr, m_arr, src_pos[:, 0], src_pos[:, 1])
+    coeffs = np.linalg.lstsq(Y, hrtf, rcond=None)[0]
+    n_freq = n_samples // 2 + 1
 
     return {
         "source": "sofa",
-        "sh_left": sh_left,
-        "sh_right": sh_right,
+        "sh_left": coeffs[:, :n_freq],
+        "sh_right": coeffs[:, n_freq:],
+        "n_arr": n_arr,
+        "m_arr": m_arr,
         "order": sh_order,
         "n_fft": n_samples,
     }
@@ -137,7 +133,8 @@ def hrir_interpolation(azimuth, elevation, head_orientation, hrtf_path, sh_order
     ----------
     azimuth : (N,) — azimuth angles in degrees (head_orientation already applied by caller)
     elevation : (N,) — elevation angles in degrees
-    head_orientation : float — additional head-above-torso rotation in degrees (HATO)
+    head_orientation : float — rotation in degrees added to the azimuth (the whole head rotates; AKtools'
+        interpolation between the HATO data sets is not implemented, so callers pass 0)
     hrtf_path : str — path to FABIAN .sofa or .mat file
     sh_order : int — SH order (default 35; ignored for .mat files which embed their own order)
 
@@ -163,10 +160,7 @@ def hrir_interpolation(azimuth, elevation, head_orientation, hrtf_path, sh_order
     az = np.mod(np.asarray(azimuth, dtype=float) + head_orientation, 360.0)
     el = np.asarray(elevation, dtype=float)
 
-    if data["source"] == "mat":
-        Y_query = _sh_matrix_complex(data["n_arr"], data["m_arr"], az, el)
-    else:
-        Y_query = _sh_matrix_real(data["order"], az, el)
+    Y_query = _sh_matrix_complex(data["n_arr"], data["m_arr"], az, el)
 
     hrtf_left = Y_query @ data["sh_left"]
     hrtf_right = Y_query @ data["sh_right"]

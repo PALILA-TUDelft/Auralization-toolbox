@@ -179,6 +179,12 @@ class AuralizationGUI(ctk.CTk):
         self.save_pdf_var = ctk.BooleanVar(value=True)
         self.pdf_checkbox = ctk.CTkCheckBox(format_frame, text="PDF", variable=self.save_pdf_var)
         self.pdf_checkbox.pack(side="left")
+        n_rows += 1
+
+        self.interpolate_panam_var = ctk.BooleanVar(value=False)
+        ctk.CTkCheckBox(frame, text="Interpolate PANAM data (halves the time step, e.g. 0.125 s to 0.0625 s)",
+                        variable=self.interpolate_panam_var).grid(
+            row=n_rows, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 12))
 
     def _build_run_section(self):
         frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -283,6 +289,7 @@ class AuralizationGUI(ctk.CTk):
             "--source-file", str(source_path),
             "--flight-profile-file", str(flight_path),
             "--figures", figures_arg,
+            "--interpolate-panam" if self.interpolate_panam_var.get() else "--no-interpolate-panam",
         ]
         if not self.save_figs_var.get():
             cmd.append("--no-save-figs")

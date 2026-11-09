@@ -11,6 +11,7 @@ from utilities.ini_parser import ini2dict, ini_int
 from utilities.io import PANAM_SQAT_data_conversion
 from utilities.create_results_folder import create_auralization_results_folder
 from utilities.prepare_input_SQ import prepare_input_SQ
+from utilities.interpolate_panam_input import interpolate_panam_input
 from auralization.master_auralization_engine_airframe import master_auralization_engine_airframe
 
 # Figure keys accepted in the `figures` argument / --figures CLI option
@@ -31,9 +32,13 @@ FIGURE_KEYS = [
 
 FIGURE_FORMAT_KEYS = ["png", "pdf"]
 
+# Insert one interpolated sample between each pair of PANAM samples, halving the time step (e.g. 0.125 s -> 0.0625 s).
+# True = interpolate, False = PANAM samples only. The GUI checkbox and --[no-]interpolate-panam override this value.
+INTERPOLATE_PANAM = False
+
 def auralization_main(main_input_path_in, tag=None, input_file_path=None, results_path=None,
                       figures=None, save_figs=True, source_file_path=None, flight_profile_file_path=None,
-                      figure_formats=None, verification=False, verification_dir=None):
+                      figure_formats=None, verification=False, verification_dir=None, interpolate_panam=None):
     """
     figures: None -> plot all figures (previous behavior);
              otherwise an iterable of FIGURE_KEYS entries selecting which figures to produce.
@@ -44,8 +49,13 @@ def auralization_main(main_input_path_in, tag=None, input_file_path=None, result
     verification: when True, every pipeline step dumps its plot vectors to <verification_dir>/<step>/*_python.npz
     verification_dir: root folder for the dumps (default: verification/). Use e.g. verification/scenarios/<name>
              (and prints [VERIFICATION] logs). Default False -> no .npz files are written.
+    interpolate_panam: True/False to interpolate or not; None -> INTERPOLATE_PANAM, except for verification runs,
+             which stay off because the MATLAB reference data has no interpolated samples.
     """
     setup_paths()
+
+    if interpolate_panam is None:
+        interpolate_panam = INTERPOLATE_PANAM and not verification
 
     if figures is None:
         figures = set(FIGURE_KEYS)
@@ -83,6 +93,7 @@ def auralization_main(main_input_path_in, tag=None, input_file_path=None, result
     from globals import __dict__ as g  # Import globals dictionary
     g['input_file'] = input_file
     g['fs'] = ini_int(input_file, "sampling_freq", 48000)
+    g['panam_upsampling'] = 2 if interpolate_panam else 1
     g['save_mat_fig'] = False  # Or True, if needed
     g['figure_formats'] = figure_formats
     g['verification'] = verification
@@ -146,8 +157,12 @@ def auralization_main(main_input_path_in, tag=None, input_file_path=None, result
     input_type = "emission"
 
     for i in range(nReceiver):
+        if verification and nReceiver > 1:
+            # one set of dumps per receiver; the ini parameters and flight profile above stay in the scenario folder
+            set_verification_root(root / f"Receiver_{i+1}")
+
         tag_receiver = str(results_folder["receiver_folders"][i] / f"{tag}_Receiver_{i+1}")
-        # Empty tag disables figure saving; the output .wav is always saved (wav_path)
+        # Empty tag disables figure saving; the output .wav files are always saved (wav_path)
         tag_auralization = tag_receiver if save_figs else ""
 
         # Trim-data figures are produced (and saved) only when a tag is passed down
@@ -170,6 +185,9 @@ def auralization_main(main_input_path_in, tag=None, input_file_path=None, result
              source_SPECTROGRAM_dBA_trimmed=source_SPECTROGRAM_dBA_trimmed,
              flight_profile_trimmed=flight_profile_trimmed)
             print(f"[VERIFICATION] Saved trimmed-input vectors to {trimmed_path}")
+
+        if g['panam_upsampling'] == 2:
+            source_data_trimmed, flight_profile_trimmed = interpolate_panam_input(source_data_trimmed, flight_profile_trimmed)
 
         master_auralization_engine_airframe(
             input_data=source_data_trimmed,
@@ -217,6 +235,9 @@ if __name__ == "__main__":
     parser.add_argument("--figure-formats", default=None,
                         help=f"Comma-separated list of file formats to write for saved figures "
                              f"(default: both). Keys: {','.join(FIGURE_FORMAT_KEYS)}.")
+    parser.add_argument("--interpolate-panam", action=argparse.BooleanOptionalAction, default=None,
+                        help="Insert one interpolated sample between each pair of PANAM samples "
+                             "(default: INTERPOLATE_PANAM in main.py)")
     args = parser.parse_args()
 
     if args.figures is None:
@@ -243,4 +264,5 @@ if __name__ == "__main__":
         figure_formats=figure_formats,
         verification=args.verification,
         verification_dir=args.verification_dir,
+        interpolate_panam=args.interpolate_panam,
     )

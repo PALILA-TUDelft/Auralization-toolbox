@@ -24,7 +24,10 @@ def master_auralization_engine_airframe(input_data, flight_profile, smoothing, i
     else:
         _show = lambda key: bool(show)
 
-    globals.dt_panam = input_data[1]['source_time'] - input_data[0]['source_time']
+    # source_time is written with 0.1 s precision, so the step between two adjacent values is unreliable;
+    # use the mean step over the whole record instead
+    source_time = [entry['source_time'] for entry in input_data]
+    globals.dt_panam = (source_time[-1] - source_time[0]) / (len(source_time) - 1)
 
     # Step 1: Time vectors
     _, time_PANAM_auralization, time = get_auralization_time(input_data, input_type)
@@ -127,10 +130,20 @@ def master_auralization_engine_airframe(input_data, flight_profile, smoothing, i
         tag_auralization, tag_source, consider_reflection
     )
 
-    # Step 10: Save output .wav file (saved even when figure saving is disabled)
+    # Step 10: Save output .wav files (saved even when figure saving is disabled)
     if wav_path is None:
         wav_path = tag_auralization
     attenuation_db = float(input_file.get("attenuation_db", 0))
+    emission_wavs = {
+        "_tonalSignal_fan_harmonics": tonal_fan,
+        "_tonalSignal_buzzsaw": tonal_buzz,
+        "_broadbandSignal_engine": broadband_engine,
+        "_engineSignal": engine_signal,
+        "_broadbandSignal_airframe": airframe_signal,
+        "_overallSignal_emission": overall_signal,
+    }
+    for file_tag, signal in emission_wavs.items():
+        save_wav(signal, int(globals.fs), attenuation_db, file_tag, wav_path)
     save_wav(overall_result["outputSignal"], int(globals.fs), attenuation_db, "_overallSignal", wav_path)
 
     # Build output struct

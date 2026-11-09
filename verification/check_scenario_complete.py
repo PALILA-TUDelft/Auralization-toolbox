@@ -11,8 +11,11 @@ wrote one) so input mismatches are caught before you chase phantom "bugs".
 Exit code 0 if nothing is missing on either side, 1 otherwise.
 """
 import argparse
+import glob
 import json
 import os
+import re
+import shutil
 import sys
 
 import numpy as np
@@ -31,6 +34,26 @@ except ImportError:  # pragma: no cover
 
 SCENARIO_ROOT = os.path.join(HERE, "scenarios")
 INI_DIR = os.path.join(REPO, "input_data", "scenarios")
+
+# written once per scenario, even when the scenario has several receivers
+SHARED_DUMPS = ["scenario_params_python.json", "scenario_params_matlab.json",
+                os.path.join("flight_profile", "flight_profile_python.npz"),
+                os.path.join("flight_profile", "flight_profile_matlab.mat")]
+
+
+def receiver_roots(scenario_dir):
+    """The folders to check and grade: the scenario folder, or its Receiver_<n> folders if it has several receivers.
+    The shared dumps are copied into each Receiver_<n> folder, so it can be graded like a one-receiver scenario."""
+    roots = glob.glob(os.path.join(scenario_dir, "Receiver_*"))
+    if not roots:
+        return [scenario_dir]
+    roots.sort(key=lambda p: int(re.search(r"(\d+)$", p).group(1)))
+    for root in roots:
+        for rel in SHARED_DUMPS:
+            if os.path.isfile(os.path.join(scenario_dir, rel)):
+                os.makedirs(os.path.dirname(os.path.join(root, rel)), exist_ok=True)
+                shutil.copy2(os.path.join(scenario_dir, rel), os.path.join(root, rel))
+    return roots
 
 
 def _load_ini(scenario_dir, ini_path):
@@ -114,6 +137,8 @@ def check_scenario(scenario_dir, ini_path=None, verbose=True):
 
     if verbose:
         name = os.path.basename(os.path.normpath(scenario_dir))
+        if name.startswith("Receiver_"):
+            name = f"{os.path.basename(os.path.dirname(os.path.normpath(scenario_dir)))}/{name}"
         print(f"\n=== {name} ===")
         for r in rows:
             if r["status"] != "OK":
@@ -153,7 +178,7 @@ def main():
         return 1
 
     total_missing = 0
-    for d in dirs:
+    for d in (root for d in dirs for root in receiver_roots(d)):
         py, ml, _ = check_scenario(d, args.ini)
         total_missing += py + ml
     print(f"\nTOTAL missing/incomplete entries: {total_missing}")
