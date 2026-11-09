@@ -205,7 +205,7 @@ git clone --recurse-submodules https://github.com/<owner>/Auralization-toolbox
 cd Auralization-toolbox
 python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -r requirements.txt -r requirements-build.txt
-./tools/build_art.sh
+bash tools/build_art.sh      # or ./tools/build_art.sh once the file is executable
 ```
 
 `build_art.sh` mirrors the PowerShell script. It uses the ITA presets

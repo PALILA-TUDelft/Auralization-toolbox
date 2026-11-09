@@ -14,6 +14,9 @@ env/
 bindings/build/
 ITAGeometricalAcoustics/out/
 bin/
+# "*.py[cod]" at the top also matches compiled extension modules (.pyd), so the
+# committed prebuilt module has to be let through explicitly.
+!prebuilt/**/*.pyd
 
 # --- Run outputs ---
 output/

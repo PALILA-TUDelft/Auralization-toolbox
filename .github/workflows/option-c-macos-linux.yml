@@ -74,7 +74,7 @@ jobs:
       - name: Build ART (tools/build_art.sh)
         run: |
           python3 --version
-          ./tools/build_art.sh
+          bash tools/build_art.sh   # "bash" so the check does not depend on the file's executable bit
 
       - name: Ray-trace check (expects 2 rays, [0, 1])
         run: |
