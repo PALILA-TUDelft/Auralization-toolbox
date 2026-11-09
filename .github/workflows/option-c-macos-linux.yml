@@ -1,0 +1,115 @@
+# Tests BUILD.md Option C: build ART from a fresh clone on macOS and on Linux and
+# run a real ray trace. The macOS and Linux build paths have never been run
+# before, so a first failure here is expected: read the log, fix, run again.
+#
+# Run it by hand: GitHub -> Actions tab -> "Option C check (macOS + Linux)" -> Run workflow.
+# The two systems run side by side and are independent (one failing does not
+# stop the other). Free on public repositories; each takes about 30-60 minutes.
+name: Option C check (macOS + Linux)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-unix:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            os: ubuntu-latest
+            artifact: art-linux-x86_64-py313
+          - name: macOS arm64
+            os: macos-latest
+            artifact: art-macos-arm64-py313
+
+    steps:
+      - name: Clone with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: CMake 3.27.9
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.27.9'
+
+      - name: System packages (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build patchelf
+
+      - name: System packages (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          xcode-select -p
+          brew install ninja
+
+      - name: Versions in use
+        run: |
+          uname -a
+          git --version
+          cmake --version
+          ninja --version
+          python --version
+          cc --version | head -1
+          df -h . | tail -1
+
+      - name: Virtual environment and Python packages
+        run: |
+          python -m venv .venv
+          # put the venv first on PATH for the following steps (build_art.sh uses the first python3)
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+          .venv/bin/python -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Build ART (tools/build_art.sh)
+        run: |
+          python3 --version
+          ./tools/build_art.sh
+
+      - name: Ray-trace check (expects 2 rays, [0, 1])
+        run: |
+          python - <<'PY'
+          from auralization.private.propagation.art_bindings import art_core_available, create_atmosphere_json, find_eigenrays
+          assert art_core_available(), "ART module not found"
+          rays = find_eigenrays(create_atmosphere_json(), [0, 0, 300], [500, 0, 2], {"maxReflectionOrder": 1})
+          out = (len(rays), [r.numReflections for r in rays])
+          print(out)
+          assert out == (2, [0, 1]), out
+          PY
+
+      - name: Library dependencies of the module
+        if: always()
+        run: |
+          ls -l bin || true
+          if [ "$RUNNER_OS" = "macOS" ]; then otool -L bin/_art_core*.so || true; else ldd bin/_art_core*.so || true; fi
+
+      - name: Upload built binaries
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: bin/
+          retention-days: 14
+
+      - name: Upload CMake logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-logs-${{ matrix.artifact }}
+          path: |
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeConfigureLog.yaml
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeError.log
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeOutput.log
+            bindings/build/CMakeFiles/CMake*.log
+          if-no-files-found: ignore
+          retention-days: 7
