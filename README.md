@@ -61,13 +61,13 @@ The overall workflow consists of:
 3. **Propagation**
    - atmospheric and ground propagation effects are modelled with a Python ART (Atmospheric Ray Tracing) interface
    - This development is based on:
-    - **Philipp Schäfer & Michael Vorländer (2021)**  
-      *Atmospheric Ray Tracing: An efficient, open-source framework for finding eigenrays in a stratified, moving medium*,  
-      *Acta Acustica*, 5, 26.  
-      https://doi.org/10.1051/aacus/2021018
+     - **Philipp Schäfer & Michael Vorländer (2021)**  
+       *Atmospheric Ray Tracing: An efficient, open-source framework for finding eigenrays in a stratified, moving medium*,  
+       *Acta Acustica*, 5, 26.  
+       https://doi.org/10.1051/aacus/2021018
 
-    - Virtual Acoustics ART project page:  
-      https://www.virtualacoustics.org/GA/art/#download
+     - Virtual Acoustics ART project page:  
+       https://www.virtualacoustics.org/GA/art/#download
 
 4. **Auralization output**
    - time-domain flyover signal
@@ -89,13 +89,15 @@ cd Auralization-toolbox
 #### Windows 
 
 ```bash 
-python -m venv .venv .venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 ``` 
 
 ### 3. Install dependencies 
 
 ```bash 
-pip install --upgrade pip pip install -r requirements.txt
+pip install --upgrade pip
+pip install -r requirements.txt
 ``` 
 
 ### 4. Repository setup 
