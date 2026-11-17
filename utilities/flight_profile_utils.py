@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from utilities.io import mhdrload
+from utilities.plot_utils import export_figures, show_figure
 
 def get_flight_profile(path, show=True, procedure=2, save_figs=True, tag="default", output_dir="."):
     """
@@ -24,6 +25,7 @@ def get_flight_profile(path, show=True, procedure=2, save_figs=True, tag="defaul
     # Load using mhdrload
     path = Path(path)
     _, data = mhdrload(path)
+    data = data[:, :, 0]
 
     conv_factor = 1000  # meters -> km for plotting
     x_km = data[:, 0] / conv_factor
@@ -40,42 +42,35 @@ def get_flight_profile(path, show=True, procedure=2, save_figs=True, tag="defaul
     }
 
     if show:
-        fig, ax1 = plt.subplots()
+        fig, ax1 = plt.subplots(layout="constrained")
+        fig.canvas.manager.set_window_title("INPUT - flight profile from PANAM")
         ax2 = ax1.twinx()
-        
-        ax1.plot(x_km, altitude_km, 'k-', label='Altitude')
-        ax1.set_ylabel('Altitude AGL, $h_{\\mathrm{AGL}}$ (km)', fontsize=12)
+
+        # MATLAB (as saved): left axis and altitude in the 1st colour, right axis in the 2nd; TAS 'b-', thrust 'r-'
+        from utilities.plot_style import MATLAB_COLORS, color_yyaxis
+        a, = ax1.plot(x_km, altitude_km, '-', color=MATLAB_COLORS[0])
+        ax1.set_ylabel('Altitude AGL, $h_{\\mathrm{AGL}}$ (km)')
 
         if procedure == 0:
-            ax1.set_xlabel('Distance from runway threshold, $x_{\\mathrm{app}}$ (km)', fontsize=12)
+            ax1.set_xlabel('Distance from runway threshold, $x_{\\mathrm{app}}$ (km)')
         elif procedure == 1:
-            ax1.set_xlabel('Distance from brake release, $x_{\\mathrm{dep}}$ (km)', fontsize=12)
+            ax1.set_xlabel('Distance from brake release, $x_{\\mathrm{dep}}$ (km)')
         elif procedure == 2:
-            ax1.set_xlabel('Distance, $x$ (km)', fontsize=12)
+            ax1.set_xlabel('Distance, $x$ (km)')
 
-        ax2.plot(x_km, TAS, 'b-', label='True airspeed')
-        ax2.plot(x_km, thrust, 'r-', label='Thrust')
-        ax2.set_ylabel('True airspeed (m/s), Thrust (kN)', fontsize=12)
+        b, = ax2.plot(x_km, TAS, 'b-')
+        c, = ax2.plot(x_km, thrust, 'r-')
+        ax2.set_ylabel('True airspeed (m/s), Thrust (kN)')
+        color_yyaxis(ax1, ax2, MATLAB_COLORS[0], MATLAB_COLORS[1])
 
-        # Combined legend
-        lines, labels = [], []
-        for ax in [ax1, ax2]:
-            for line, label in zip(*ax.get_legend_handles_labels()):
-                lines.append(line)
-                labels.append(label)
-        ax1.legend(lines, labels, loc='best')
-
-        fig.tight_layout()
+        ax1.legend([a, b, c], ['Altitude', 'True airspeed', 'Thrust'], loc='best', frameon=False)   # MATLAB: legend boxoff
         fig.patch.set_facecolor('white')
 
         if save_figs:
             output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-            filename = output_path / f"flight_profile_{tag}.pdf"
-            fig.savefig(filename, bbox_inches='tight')
-            print(f"[INFO] Flight profile plot saved to {filename}")
+            filename = output_path / f"flight_profile_{tag}"
+            export_figures(filename, save_mat_fig=False, save_png=True, save_pdf=True)
 
-
-        plt.show()
+        show_figure()
 
     return result

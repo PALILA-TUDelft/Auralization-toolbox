@@ -1,0 +1,106 @@
+# Builds the ART module from a fresh clone on an empty Windows machine and runs a
+# real ray trace, following BUILD.md Option B step by step. It is the test that
+# nothing on the author's computer is silently required.
+#
+# Run it by hand: GitHub -> Actions tab -> "Fresh-clone build (Windows)" -> Run workflow.
+# It takes roughly 45-60 minutes (VS 2019 install ~10-15, ITA build ~25).
+# Free on public repositories.
+name: Fresh-clone build (Windows)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest        # Windows Server 2022 image: VS 2022 only, so VS 2019 is installed below
+    timeout-minutes: 150
+
+    steps:
+      - name: Enable long paths
+        shell: powershell
+        run: git config --system core.longpaths true
+
+      - name: Clone with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: CMake 3.27.9
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.27.9'
+
+      - name: Build Tools for Visual Studio 2019 (Desktop development with C++)
+        shell: powershell
+        run: |
+          choco install visualstudio2019buildtools visualstudio2019-workload-vctools -y --no-progress
+          # 3010 = success, reboot pending
+          if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010) { exit $LASTEXITCODE }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          & $vswhere -version '[16.0,17.0)' -products '*' -property installationPath
+          if (-not (& $vswhere -version '[16.0,17.0)' -products '*' -property installationPath)) {
+            throw 'Visual Studio 2019 was not installed'
+          }
+
+      - name: Versions in use
+        shell: powershell
+        run: |
+          git --version
+          cmake --version
+          python --version
+
+      - name: Virtual environment and Python packages
+        shell: powershell
+        run: |
+          python -m venv .venv
+          # put the venv first on PATH for the following steps (build_art.ps1 uses the first python)
+          Add-Content -Path $env:GITHUB_PATH -Value "$PWD\.venv\Scripts"
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Build ART (tools/build_art.ps1)
+        shell: powershell
+        run: |
+          python --version
+          .\tools\build_art.ps1
+
+      - name: Ray-trace check (expects 2 rays, [0, 1])
+        shell: powershell
+        run: |
+          @'
+          from auralization.private.propagation.art_bindings import art_core_available, create_atmosphere_json, find_eigenrays
+          assert art_core_available(), "ART module not found"
+          rays = find_eigenrays(create_atmosphere_json(), [0, 0, 300], [500, 0, 2], {"maxReflectionOrder": 1})
+          out = (len(rays), [r.numReflections for r in rays])
+          print(out)
+          assert out == (2, [0, 1]), out
+          '@ | python -
+
+      - name: List bin/
+        if: always()
+        shell: powershell
+        run: Get-ChildItem bin -ErrorAction SilentlyContinue | Select-Object Name, Length
+
+      - name: Upload built binaries (Python 3.13, win-amd64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: art-win-amd64-py313
+          path: bin/
+          retention-days: 14
+
+      - name: Upload CMake logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-logs
+          path: |
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeConfigureLog.yaml
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeError.log
+            ITAGeometricalAcoustics/out/build/**/CMakeFiles/CMakeOutput.log
+            bindings/build/CMakeFiles/CMake*.log
+          if-no-files-found: ignore
+          retention-days: 7

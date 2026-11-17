@@ -2,3 +2,4 @@ from .atmosphere import StratifiedAtmospherePy
 from .ground_reflection import get_ground_reflection_coefficient
 from .tf_model import transfer_function_from_eigenrays
 from .angles import fabian_angles_from_eigenrays
+from .hrtf import hrir_interpolation

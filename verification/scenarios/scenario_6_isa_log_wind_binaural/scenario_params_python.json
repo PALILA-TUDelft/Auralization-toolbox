@@ -1,0 +1,20 @@
+{
+  "ini_file": "C:\\Dev\\Auralization-toolbox\\input_data\\scenarios\\scenario_6_isa_log_wind_binaural.ini",
+  "sampling_freq": "48000",
+  "trim_time": "20",
+  "binaural_signal": "1",
+  "head_orientation": "0",
+  "max_rotations_per_minute": "4998",
+  "n_harmonics": "151",
+  "wind_profile": "log",
+  "const_wind_direction": "[-1 0 0]",
+  "surface_roughness": "0.05",
+  "friction_velocity": "0.4",
+  "temperature_profile": "isa",
+  "temperature_celsius": "15",
+  "const_static_pressure": "101325",
+  "humidity_profile": "constant",
+  "const_rel_humidity": "60",
+  "consider_ground_reflection": "1",
+  "sigma_e": "200e3"
+}

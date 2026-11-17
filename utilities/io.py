@@ -62,7 +62,7 @@ def load_header(header_block):
 
 def A_weighting():
     return np.array([
-        [25, -44.7], [31.5, -39.4], [40, -34.6], [50, -30.2], [63, -26.2],
+        [25, -44.7], [32, -39.4], [40, -34.6], [50, -30.2], [63, -26.2],
         [80, -22.5], [100, -19.1], [125, -16.1], [160, -13.4], [200, -10.9],
         [250, -8.6], [315, -6.6], [400, -4.8], [500, -3.2], [630, -1.9],
         [800, -0.8], [1000, 0], [1250, 0.6], [1600, 1], [2000, 1.2],
@@ -85,6 +85,17 @@ def apply_a_weighting(spectrum, a_weights):
         level = spectrum[k, 1] + a_weights[k, 1]
         weighted[k, 1] = max(level, 0) # if < 0 -> 0 ; other level
     return weighted
+
+def apply_a_weighting_fan_harmonics(spectrum, a_weights):
+    """MATLAB fan_harmonics_dBA rule: the A-weighting is added only where the 1/3-octave SPL is > 0 (the result is
+    not clamped); bands without a harmonic stay 0."""
+    weighted = np.zeros_like(spectrum)
+    weighted[:, 0] = a_weights[:, 0]
+    for k in range(len(a_weights)):
+        level = spectrum[k, 1]
+        weighted[k, 1] = level + a_weights[k, 1] if level > 0 else 0.0
+    return weighted
+
 
 def log_sum(*args):
     total = np.zeros_like(args[0])
@@ -115,6 +126,8 @@ def compute_OASPL(data):
 
         obs_data_dBA = {
             'airframe': [],
+            'engine_broadband': [],
+            'engine_buzzsaw': [],
             'engine': [],
             'overall': [],
             'engine_without_fan_harmonics': [],
@@ -151,6 +164,28 @@ def compute_OASPL(data):
                     obs_data_dBA[key].append(0.0)
 
 
+
+        # Time-integrated metrics (MATLAB: OASPL.SEL / .Leq / .Lmax and OASPL_dBA.SEL_dBA / .Leq_dBA / .LAmax).
+        # dt = |retarded-time step|, with the last step repeated. (MATLAB's Leq_dBA.engine omits the division by
+        # sum(dt) and its SEL_dBA field for the fan harmonics is called fan_harmonics_toc; both are regularised here.)
+        rt = np.asarray(obs_data['retarded_time'], dtype=float)
+        dt = np.abs(np.diff(rt))
+        dt = np.append(dt, dt[-1]) if dt.size else np.ones_like(rt)
+
+        def _metrics(src, keys):
+            sel, leq, lmax = {}, {}, {}
+            for key in keys:
+                lev = np.asarray(src[key], dtype=float)
+                energy = np.sum(10 ** (lev / 10) * dt)
+                sel[key] = 10 * np.log10(energy)
+                leq[key] = 10 * np.log10(energy / np.sum(dt))
+                lmax[key] = np.max(lev)
+            return sel, leq, lmax
+
+        level_keys = [k for k in obs_data if k not in ('source_time', 'retarded_time')]
+        obs_data['SEL'], obs_data['Leq'], obs_data['Lmax'] = _metrics(obs_data, level_keys)
+        level_keys_dBA = [k for k in obs_data_dBA if k not in ('source_time', 'retarded_time')]
+        obs_data_dBA['SEL_dBA'], obs_data_dBA['Leq_dBA'], obs_data_dBA['LAmax'] = _metrics(obs_data_dBA, level_keys_dBA)
 
         OASPL.append(obs_data)
         OASPL_dBA.append(obs_data_dBA)
@@ -279,10 +314,12 @@ def PANAM_SQAT_data_conversion(PATH):
             # Loop over each harmonic and assign its SPL to the nearest 1/3-octave band
             # NOTE: If multiple harmonics map to the same band, only the LAST one is retained.
             for f, spl in d["fan_harmonics"]:
+                if f == 0:   # MATLAB only loops over the non-zero harmonic frequencies
+                    continue
                 idx_closest = np.argmin(np.abs(d["fan_harmonics_toc"][:, 0] - f))
                 d["fan_harmonics_toc"][idx_closest, 1] = spl  # Overwrite existing value
 
-            d["fan_harmonics_dBA"] = apply_a_weighting(d["fan_harmonics_toc"], a_weights)
+            d["fan_harmonics_dBA"] = apply_a_weighting_fan_harmonics(d["fan_harmonics_toc"], a_weights)
 
             d["engine"] = np.column_stack((
                 d["airframe_toc"][:, 0],

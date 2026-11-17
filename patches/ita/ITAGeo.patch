@@ -1,0 +1,45 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -40,7 +40,7 @@
+ 
+ find_package (SketchUpAPI)
+ 
+-if (WIN32)
++if (WIN32 AND SketchUpAPI_FOUND)
+ 	# set the import location for the SketchUpAPI so that the TARGET_RUNTIME_DLLS can be copied
+ 	set_property (TARGET SketchUp::SketchUpAPI PROPERTY IMPORTED_LOCATION ${SketchUpAPI_BINARIES})
+ endif ()
+--- a/external_libs/CMakeLists.txt
++++ b/external_libs/CMakeLists.txt
+@@ -1,3 +1,14 @@
++include(GNUInstallDirs)
++CPMAddPackage (
++	NAME netcdf-cxx4
++	GITHUB_REPOSITORY Unidata/netcdf-cxx4
++	GIT_TAG v4.3.1
++	SOURCE_SUBDIR cxx4
++	OPTIONS "BUILD_SHARED_LIBS OFF"
++	PATCHES
++	${CMAKE_CURRENT_LIST_DIR}/patches/netcdf-cxx4.patch
++)
++
+ if (NOT TARGET ITACoreLibs)
+ 	set (CORE_LIBS_BRANCH "master")
+ 	find_package (Git)
+@@ -16,7 +27,10 @@
+ 	CPMAddPackage (
+ 		NAME ITACoreLibs
+ 		GIT_REPOSITORY https://git.rwth-aachen.de/ita/ITACoreLibs
+-		GIT_TAG ${CORE_LIBS_BRANCH}
++		# Pinned (was ${CORE_LIBS_BRANCH}, i.e. 'develop' in any submodule checkout):
++		# see patches/ita/dependency-lock.cmake
++		GIT_TAG b82d1daaf206a70838520f2f96adf24524bc4012
++		GIT_SHALLOW FALSE
+ 		OPTIONS "ITA_BASE_WITH_JSON_SUPPORT ${ITA_GEO_WITH_JSON_SUPPORT}"
+ 	)
+ endif ()
+@@ -148,3 +162,4 @@
+ 		)
+ 	endif ()
+ endif ()
++

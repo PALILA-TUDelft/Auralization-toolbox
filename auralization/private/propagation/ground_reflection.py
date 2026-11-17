@@ -7,6 +7,11 @@ except Exception as e:
     faddeeva_w = None
 
 
+# The frequency vector starts at 0 Hz: there X**b (b < 0) is inf and 1/Zn is inf/NaN. MATLAB computes
+# these silently and then truncates every NaN/Inf to 0 ("truncate NaN values" in
+# get_ground_reflection_coefficient.m); the np.where(np.isfinite(...)) lines below do the same, so numpy's
+# floating-point warnings for that DC bin are expected and silenced here (this function only).
+@np.errstate(divide="ignore", invalid="ignore")
 def get_ground_reflection_coefficient(freq_hz: np.ndarray,
                                   sigma_e: float,
                                   theta_rad: float,

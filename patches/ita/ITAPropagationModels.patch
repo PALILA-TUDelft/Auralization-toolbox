@@ -1,0 +1,28 @@
+--- a/apps/pelican/CMakeLists.txt
++++ b/apps/pelican/CMakeLists.txt
+@@ -23,7 +23,7 @@
+ 
+ target_link_libraries (
+ 	${PROJECT_NAME} PUBLIC ITAPropagationModels::ITAPropagationModels IHTA::propagation_path_list au::au CLI11::CLI11
+-						   indicators::indicators netcdf-cxx4
++						   indicators::indicators
+ )
+ 
+ if (MSVC)
+--- a/external_libs/CMakeLists.txt
++++ b/external_libs/CMakeLists.txt
+@@ -102,14 +102,3 @@
+ 	SOURCE_SUBDIR cxx4
+ 	OPTIONS "BUILD_SHARED_LIBS OFF"
+ )
+-
+-if (netcdf-cxx4_ADDED)
+-
+-	target_link_libraries (
+-		netcdf-cxx4
+-		PUBLIC netcdf
+-		PRIVATE HDF5::HDF5
+-	)
+-	set_property (TARGET netcdf-cxx4 PROPERTY FOLDER "external_libs/netcdf")
+-	set_property (TARGET netcdf-cxx4 PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+-endif ()

@@ -1,0 +1,3 @@
+[submodule "ITAGeometricalAcoustics"]
+	path = ITAGeometricalAcoustics
+	url = https://git.rwth-aachen.de/ita/ITAGeometricalAcoustics.git

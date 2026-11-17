@@ -4,7 +4,7 @@ from scipy.io import loadmat
 
 # Load both time vectors
 python_data = np.load("verification/time_vector/time_vectors_python.npz")
-matlab_data = loadmat("verification/time_vector/time_vectors_matlab2.mat")
+matlab_data = loadmat("verification/time_vector/time_vectors_matlab.mat")
 # Extract
 t_py_pan = python_data["time_PANAM_auralization"]
 t_py = python_data["time"]

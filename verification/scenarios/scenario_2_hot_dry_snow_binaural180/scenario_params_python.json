@@ -1,0 +1,17 @@
+{
+  "ini_file": "C:\\Dev\\Auralization-toolbox\\input_data\\scenarios\\scenario_2_hot_dry_snow_binaural180.ini",
+  "sampling_freq": "48000",
+  "trim_time": "10",
+  "binaural_signal": "1",
+  "head_orientation": "180",
+  "max_rotations_per_minute": "4998",
+  "n_harmonics": "201",
+  "wind_profile": "zero",
+  "temperature_profile": "constant",
+  "temperature_celsius": "35",
+  "const_static_pressure": "101325",
+  "humidity_profile": "constant",
+  "const_rel_humidity": "20",
+  "consider_ground_reflection": "1",
+  "sigma_e": "25e3"
+}

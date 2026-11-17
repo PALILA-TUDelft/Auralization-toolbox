@@ -59,15 +59,18 @@ def fabian_angles_from_eigenrays(eigenrays_direct, eigenrays_reflected, receiver
 
 def moving_average(x: np.ndarray, window: int = 10) -> np.ndarray:
     """
-    Applies along axis 0.
+    Matches MATLAB smoothdata(x, 'movmean', k): truncated window at edges.
     """
     if window <= 1:
         return x.copy()
-    if x.shape[0] < window:
-        return x.copy()
+    N = x.shape[0]
 
-    kernel = np.ones(window, dtype=float) / float(window)
+    back = window // 2
+    fwd = (window - 1) // 2
+    cs = np.vstack([np.zeros((1, x.shape[1])), np.cumsum(x, axis=0)])
     out = np.zeros_like(x, dtype=float)
-    for col in range(x.shape[1]):
-        out[:, col] = np.convolve(x[:, col], kernel, mode="same")
+    for i in range(N):
+        lo = max(0, i - back)
+        hi = min(N, i + fwd + 1)
+        out[i, :] = (cs[hi, :] - cs[lo, :]) / (hi - lo)
     return out
